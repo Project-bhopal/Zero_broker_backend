@@ -113,13 +113,26 @@ const refreshTokenVerify = async (req, res) => {
 };
 
 // Role-Based Authorization Middleware
-const authorizeRoles = (...roles) => {
+// const authorizeRoles = (...roles) => {
+//   return (req, res, next) => {
+//     if (!roles.includes(req.user.role)) {
+//       return res.status(403).json({
+//         status: 'failed',
+//         message: `Access denied. Required role: ${roles.join(', ')}`,
+//         error: { message: 'Access denied for this user' },
+//       });
+//     }
+//     next();
+//   };
+// };
+
+const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         status: 'failed',
-        message: `Access denied. Required role: ${roles.join(', ')}`,
-        error: { message: 'Access denied for this user' },
+        message: `Access denied. Required role: ${allowedRoles.join(', ')}`,
+        error: { message: 'You do not have permission to perform this action' },
       });
     }
     next();
