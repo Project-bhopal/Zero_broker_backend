@@ -48,71 +48,6 @@ exports.signup = async (req, res) => {
   }
 };
 
-// **Verify OTP and Login*
-// exports.verifyOTP = async (req, res) => {
-//   try {
-//     const { email,otp_number,otp_type} = req.body;
-
-//      // Find the user
-//      const user = await User.findOne({email});
-//      if (!user) {
-//        return res.status(400).json({status: "Failed", message: "User not found.",error:{message:"OTP verification failed"} });
-//      }
-//      if(otp_type === "varification"){
-//         if(user.isVerified){
-//           return res.status(400).json({
-//             status: "Failed",
-//             message: "User already verified",
-//             error: {
-//               message: "User already verified,OTP verification failed",
-//             },
-//           });
-//         }
-//       }
-//     // Find the latest OTP for the given userId
-//     const latestOtp = await Otp.findOne({ email }).sort({ createdAt: -1 }).limit(1);
-    
-//     // Validate OTP
-//     if (!latestOtp) {
-//       return res.status(400).json({ status: "Failed", message: "OTP not found." ,error:{message:"OTP verification failed"}});
-//     }
-
-//     // Check if OTP matches
-//     if (latestOtp.otp_number !== otp_number) {
-//       return res.status(400).json({ status: "Failed", message: "Invalid OTP." ,error:{message:"OTP verification failed"}});
-//     }
-
-//     // Check if OTP is expired
-//     const currentTime = new Date();
-//     if (latestOtp.expiresAt < currentTime) {
-//       return res.status(400).json({ status: "Failed", message: "OTP has expired." ,error:{message:"OTP verification failed"}});
-//     }
-
-//     // Delete OTP after successful verification
-//     await Otp.deleteMany({ email: user.email });
-
-//     // Update user as verified
-//     user.isVerified = true;
-//     await user.save();
-//     return res.status(200).json({
-//       status: "Success",
-//       message: "OTP verified successfully",
-//       data: {
-//         otp_verified: true
-//       },
-//     });
-      
-//   } catch (error) {
-//     res.status(500).json({ 
-//       status: "Failed", 
-//       message: error.message ,
-//       error:{
-//         message:"OTP verification failed"
-//       } 
-//     });
-//   }
-// };
-
 exports.verifyOTP  = async (req, res) => {
   try {
       const { email, otp_number, otp_type } = req.body;
@@ -165,7 +100,7 @@ exports.verifyOTP  = async (req, res) => {
       }
 
       // Delete OTP after successful verification
-      await Otp.deleteMany({ email });
+      // await Otp.deleteMany({ email });
 
       // Update user as verified
       user.isVerified = true;
@@ -211,7 +146,7 @@ exports.generateOtp = async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
     // Send OTP via email
-    await sendEmail(email, "Your Login OTP", `Your OTP is: ${otp}`);
+    await sendEmail(email,  otp);
     // Remove previous OTPs
     await Otp.deleteMany({ userId: user._id });
     // Store OTP with userId
@@ -265,7 +200,7 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ $or: [{ email }, { mobile }] });
 
     if (!user) {
-      return res.status(400).json({ message: "User not found" , error: { message: "Invalid credentials" },
+      return res.status(400).json({status:"failed", message: "User not found" , error: { message: "Invalid credentials" },
       });
     }
 

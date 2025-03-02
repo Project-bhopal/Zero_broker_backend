@@ -6,6 +6,7 @@ dotenv.config();
 const connectdb = require("./src/config/db");
 const cookieParser = require("cookie-parser");
 const userRoutes = require("./src/routes/UserRoutes");
+const agentRoutes = require("./src/routes/agentRoutes");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
@@ -32,6 +33,7 @@ app.use((err, req, res, next) => {
   
 
 app.use('/api/v1/auth' ,userRoutes);
+app.use("/api/v1/agents", agentRoutes);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
