@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 // app.use(cors({ credentials: true, origin: true })); // Allow frontend to send cookies
 const corsOptions = {
-    origin: true, 
+    origin: "*", 
     credentials: true, // Allow cookies
     // methods: ["GET", "POST", "PATCH", "DELETE"], // Restrict allowed methods
   };
@@ -35,7 +35,7 @@ app.use((err, req, res, next) => {
 app.use('/api/v1/auth' ,userRoutes);
 app.use("/api/v1/agents", agentRoutes);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
