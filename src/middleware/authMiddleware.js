@@ -128,7 +128,9 @@ const refreshTokenVerify = async (req, res) => {
 
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
+    console.log("User Role from Token:", req.user?.role);  
+    console.log("Expected Allowed Roles:", allowedRoles);
+    if (!req.user || !allowedRoles.includes(req.user.role)) {  
       return res.status(403).json({
         status: 'failed',
         message: `Access denied. Required role: ${allowedRoles.join(', ')}`,
