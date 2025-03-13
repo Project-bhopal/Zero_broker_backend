@@ -3,7 +3,7 @@ const RequestedProperty = require("../models/RequestedProperty");
 // Create a new requested property listing by seller
 exports.createRequest = async (req, res) => {
   try {
-    if (req.user.role !== "seller") {
+    if (req.user.role !== "seller" ) {
       return res.status(403).json({
         status: "failed",
         message: "Only sellers can request property listings.",

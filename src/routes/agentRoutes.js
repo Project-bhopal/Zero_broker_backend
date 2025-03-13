@@ -9,7 +9,7 @@ router.get("/all", accessTokenVerify, authorizeRoles("admin"), getAllAgents);
 router.delete("/delete/:agentId", accessTokenVerify, authorizeRoles("admin"), deleteAgent);
 router.put("/update/:agentId", accessTokenVerify,authorizeRoles("admin"), updateAgent);
 
-// Routes for Agents onl
+// Routes for Agents only
 router.get("/profile", accessTokenVerify, authorizeRoles("agent"), getAgentProfile);
 
 module.exports = router;
