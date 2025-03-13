@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     mobile: { type: String, required: true, unique: true },
     role: { type: String, enum: ["seller", "buyer", "admin", "agent"], default: "buyer" },
-    profilePhoto: { type: String },
+    // profilePhoto: { type: String },
     isGoogleUser: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
   },
