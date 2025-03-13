@@ -20,6 +20,7 @@ const createDirectories = () => {
     fs.mkdirSync(videosDir, { recursive: true });
   }
 };
+createDirectories();
 
 // Ensure that the "uploads" folder exists inside the existing "src" directory
 if (fs.existsSync(srcDir)) {
@@ -61,9 +62,17 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
+// module.exports = {
+//   uploadSingle: (fieldName) => upload.single(fieldName),  // For single file upload
+//   uploadMultiple: (fieldName, maxCount) => upload.array(fieldName, maxCount), // For multiple file upload
+//   uploadSingleVideo: (fieldName) => upload.single(fieldName),  // For single video upload
+//   uploadMultipleVideos: (fieldName, maxCount) => upload.array(fieldName, maxCount), // For multiple video upload
+// };
 module.exports = {
-  uploadSingle: (fieldName) => upload.single(fieldName),  // For single file upload
-  uploadMultiple: (fieldName, maxCount) => upload.array(fieldName, maxCount), // For multiple file upload
-  uploadSingleVideo: (fieldName) => upload.single(fieldName),  // For single video upload
-  uploadMultipleVideos: (fieldName, maxCount) => upload.array(fieldName, maxCount), // For multiple video upload
+  upload,
+  uploadSingle: (fieldName) => upload.single(fieldName),
+  uploadMultiple: (fieldName, maxCount) => upload.array(fieldName, maxCount),
+  uploadSingleVideo: (fieldName) => upload.single(fieldName),
+  uploadMultipleVideos: (fieldName, maxCount) => upload.array(fieldName, maxCount),
 };
+
