@@ -3,10 +3,13 @@ const Property = require("../models/Property");
 
 exports.createProperty = async (req, res) => {
   try {
+    // console.log("===>",req.body)
+    console.log("Uploaded Files:", req.files);
+    console.log("Request Body:", req.body);
     const { 
       name, title, description, price, currency, reference_number, listing_platform 
     } = req.body;
-
+    console.log("===>",req.body)
     const location = req.body.location ? JSON.parse(req.body.location) : {};
     const details = req.body.details ? JSON.parse(req.body.details) : {};
     const other_amenities = req.body.other_amenities ? JSON.parse(req.body.other_amenities) : [];
@@ -21,6 +24,9 @@ exports.createProperty = async (req, res) => {
     const imageUrls = images.map(filename => `${baseUrl}/uploads/images/${filename}`);
     const videoUrls = videos.map(filename => `${baseUrl}/uploads/videos/${filename}`);
 
+
+    console.log("Uploaded Images:", imageUrls);
+    console.log("Uploaded Videos:", videoUrls);
 
     const developer_notes = {
       images: imageUrls,
@@ -55,6 +61,7 @@ exports.createProperty = async (req, res) => {
       listing,
       developer_notes,
     });
+    console.log("===>",newProperty)
 
     await newProperty.save();
 
@@ -71,6 +78,8 @@ exports.createProperty = async (req, res) => {
     res.status(500).json({ success: false, message: "Property not created ", error: error.message });
   }
 };
+
+
 
 
 exports.updateProperty = async (req, res) => {
@@ -197,6 +206,7 @@ exports.getPropertyById = async (req, res) => {
 exports.deleteProperty = async (req, res) => {
   try {
     const property = await Property.findByIdAndDelete(req.params.id);
+    console.log("===>",property)
     if (!property) {
       return res.status(404).json({ success: false, message: "Property not found" });
     }

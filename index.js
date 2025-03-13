@@ -9,10 +9,13 @@ const userRoutes = require("./src/routes/UserRoutes");
 const agentRoutes = require("./src/routes/agentRoutes");
 const profileRoutes = require("./src/routes/profileRoutes");
 const requestedPropertyRoutes = require('./src/routes/requestedPropertyRoutes');
+const propertyRoutes=require("./src/routes/PropertyRoutes")
 
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); // Serve static files
 app.use(express.urlencoded({ extended: true })); 
+
+
 
 app.use(cookieParser());
 // app.use(cors({ credentials: true, origin: true })); // Allow frontend to send cookies
@@ -38,7 +41,7 @@ app.use((err, req, res, next) => {
 app.use('/api/v1/auth' ,userRoutes);
 app.use("/api/v1/agents", agentRoutes);
 app.use("/api/v1/profile", profileRoutes);
-app.use('/api/v1/property', requestedPropertyRoutes);
+app.use('/api/v1/property', propertyRoutes);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {

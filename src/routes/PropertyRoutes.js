@@ -1,18 +1,26 @@
 const propertyController = require("../controllers/PropertyController");
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/uploadFile"); 
+const {upload} = require("../utils/multer"); 
 const {authorizeRoles,accessTokenVerify}=require("../middleware/authMiddleware")
 
+const uploadfiles = upload.fields([{ name: "images", maxCount: 5 }, { name: "videos", maxCount: 2 }])
 
-router.post("/create",accessTokenVerify, authorizeRoles("admin"), propertyController.createProperty);
 
-router.patch("/update/:id", upload, propertyController.updateProperty);
+router.post("/create",accessTokenVerify, 
+  authorizeRoles("admin"), 
+  uploadfiles,
+  propertyController.createProperty);
 
-router.post("/approve/:id", propertyController.approveProperty);
+router.patch("/update/:id",accessTokenVerify,
+    authorizeRoles("admin"),
+     uploadfiles,
+      propertyController.updateProperty);
 
-router.get("/getProperties", propertyController.getAllProperties); 
+router.post("/approve/:id",accessTokenVerify, authorizeRoles("admin"),propertyController.approveProperty);
 
-router.delete("/delete", propertyController.deleteProperty); 
+router.get("/getProperties",accessTokenVerify, authorizeRoles("admin"), propertyController.getAllProperties); 
+
+router.delete("/:id",accessTokenVerify, authorizeRoles("admin"), propertyController.deleteProperty); 
 
 module.exports = router;
