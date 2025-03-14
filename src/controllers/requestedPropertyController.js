@@ -144,3 +144,210 @@ exports.acceptRequest = async (req, res) => {
     });
   }
 };
+
+
+
+
+//  Seller views all their requested properties
+exports.getMyRequestedProperties = async (req, res) => {
+  try {
+    const myRequests = await RequestedProperty.find({ seller: req.user._id });
+
+    if (!myRequests.length) {
+      return res.status(404).json({
+        status: "failed",
+        message: "You have not made any property requests.",
+        error: "No data available",
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Your requested properties retrieved successfully.",
+      data: myRequests,
+      error: null
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "failed",
+      message: "Server error",
+      error: error.message,
+      data: null
+    });
+  }
+};
+
+//  Agent views all accepted requests by them
+exports.getAcceptedRequestsByAgent = async (req, res) => {
+  try {
+    const acceptedRequests = await RequestedProperty.find({
+      assignedAgent: req.user._id,
+      status: "Accepted"
+    }).populate("seller", "fullname email");
+
+    if (!acceptedRequests.length) {
+      return res.status(404).json({
+        status: "failed",
+        message: "You have not accepted any property requests.",
+        error: "No data available",
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Accepted property requests retrieved successfully.",
+      data: acceptedRequests,
+      error: null
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "failed",
+      message: "Server error",
+      error: error.message,
+      data: null
+    });
+  }
+};
+
+//  Seller views which agent accepted their request
+exports.getAcceptedAgentsForMyRequests = async (req, res) => {
+  try {
+    const acceptedRequests = await RequestedProperty.find({
+      seller: req.user._id,
+      status: "Accepted"
+    }).populate("assignedAgent", "fullname email");
+
+    if (!acceptedRequests.length) {
+      return res.status(404).json({
+        status: "failed",
+        message: "No agents have accepted your property requests yet.",
+        error: "No data available",
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Agents who accepted your property requests retrieved successfully.",
+      data: acceptedRequests,
+      error: null
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "failed",
+      message: "Server error",
+      error: error.message,
+      data: null
+    });
+  }
+};
+
+
+
+
+// admin api 
+
+// Admin: Get all property requests
+exports.getAllRequests = async (req, res) => {
+  try {
+    const requests = await RequestedProperty.find()
+      .populate("seller", "fullname email")
+      .populate("assignedAgent", "fullname email");
+
+    res.status(200).json({
+      status: "success",
+      message: "All property requests retrieved successfully.",
+      data: requests,
+      error: null
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: "Server error",
+      error: error.message,
+      data: null
+    });
+  }
+};
+
+// Admin: Get all pending requests
+exports.getPendingRequests = async (req, res) => {
+  try {
+    const requests = await RequestedProperty.find({ status: "Pending" })
+      .populate("seller", "fullname email");
+
+    res.status(200).json({
+      status: "success",
+      message: "Pending property requests retrieved successfully.",
+      data: requests,
+      error: null
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: "Server error",
+      error: error.message,
+      data: null
+    });
+  }
+};
+
+// Admin: Get all accepted requests
+exports.getAcceptedRequests = async (req, res) => {
+  try {
+    const requests = await RequestedProperty.find({ status: "Accepted" })
+      .populate("seller", "fullname email")
+      .populate("assignedAgent", "fullname email");
+
+    res.status(200).json({
+      status: "success",
+      message: "Accepted property requests retrieved successfully.",
+      data: requests,
+      error: null
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: "Server error",
+      error: error.message,
+      data: null
+    });
+  }
+};
+
+// Admin: Delete a request
+exports.deleteRequest = async (req, res) => {
+  try {
+    const request = await RequestedProperty.findById(req.params.id);
+    
+    if (!request) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Property request not found.",
+        error: "Invalid request ID",
+        data: null
+      });
+    }
+
+    await request.deleteOne();
+
+    res.status(200).json({
+      status: "success",
+      message: "Property request deleted successfully.",
+      data: null,
+      error: null
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: "Server error",
+      error: error.message,
+      data: null
+    });
+  }
+};

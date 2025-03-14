@@ -5,7 +5,15 @@ const { accessTokenVerify, authorizeRoles } = require("../middleware/authMiddlew
 
 const router = express.Router();
 
-router.put("/update", accessTokenVerify, uploadSingle("userprofile"), updateProfile);
-router.get("/me", accessTokenVerify, getProfile);
+router.put(
+     "/update",
+      accessTokenVerify,
+       uploadSingle("userprofile"),
+        updateProfile
+     );
+router.get(
+     "/me", 
+     accessTokenVerify
+     , getProfile);
 
 module.exports = router;
