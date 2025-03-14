@@ -223,15 +223,19 @@ exports.login = async (req, res) => {
     // Set token in HTTP-only cookie
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV,
-      sameSite: "strict",
+      // secure: process.env.NODE_ENV,
+      secure: false, // 👈 Set to false if using an IP (update to true after setting up HTTPS)
+      // sameSite: "strict",
+      sameSite: "Lax",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
      // Set token in HTTP-only cookie
      res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV,
-      sameSite: "strict",
+      // secure: process.env.NODE_ENV,
+      secure: false, // 👈 Set to false if using an IP (update to true after setting up HTTPS)
+      // sameSite: "strict",
+      sameSite: "Lax",
       maxAge: 7 * 60 * 60 * 1000, // 7 day
     });
    
