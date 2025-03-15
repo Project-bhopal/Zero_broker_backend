@@ -239,6 +239,15 @@ exports.login = async (req, res) => {
       maxAge: 7 * 60 * 60 * 1000, // 7 day
     });
    
+     res.cookie("role", user.role, {
+      httpOnly: true,
+      // secure: process.env.NODE_ENV,
+      secure: false, // 👈 Set to false if using an IP (update to true after setting up HTTPS)
+      // sameSite: "strict",
+      sameSite: "Lax",
+      maxAge: 7 * 60 * 60 * 1000, // 7 day
+    });
+   
     res.status(201).json({ 
       status: "Success",
       message: "User logged in successfully.",
