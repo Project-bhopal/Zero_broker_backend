@@ -8,7 +8,7 @@ const uploadfiles = upload.fields([{ name: "images", maxCount: 5 }, { name: "vid
 
 
 router.post("/create",accessTokenVerify, 
-  authorizeRoles("admin"), 
+  authorizeRoles("agent"), 
   uploadfiles,
   propertyController.createProperty);
 
@@ -17,10 +17,14 @@ router.patch("/update/:id",accessTokenVerify,
      uploadfiles,
       propertyController.updateProperty);
 
+
+
 router.post("/approve/:id",accessTokenVerify, authorizeRoles("admin"),propertyController.approveProperty);
 
 router.get("/getProperties",accessTokenVerify, authorizeRoles("admin"), propertyController.getAllProperties); 
 
-router.delete("/:id",accessTokenVerify, authorizeRoles("admin"), propertyController.deleteProperty); 
+router.get("/getPropertiesByAgent/:id",accessTokenVerify, authorizeRoles("agent"),propertyController.getPropertiesByAgent)
+
+router.delete("/:id",accessTokenVerify, authorizeRoles("agent"), propertyController.deleteProperty); 
 
 module.exports = router;
