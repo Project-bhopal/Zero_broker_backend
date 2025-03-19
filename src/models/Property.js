@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const PropertySchema = new mongoose.Schema({
-    name: { type: String, required: true },
+    name: { type: String, },
     title: { type: String, required: true },
     description: { type: String },
     price: { type: Number, required: true },
@@ -25,18 +25,18 @@ const PropertySchema = new mongoose.Schema({
     },
 
     details: {
-        type: { type: String},
-        purpose: { type: String },
-        bedrooms: { type: Number},
-        bathrooms: { type: Number},
+        property_type: { type: String, },
+        purpose: { type: String,  },
+        bedrooms: { type: Number, },
+        bathrooms: { type: Number, },
         size: {
             value: { type: Number },
             unit: { type: String}
         },
-        completion_status: { type: String },
-        furnishing: { type: String },
+        completion_status: { type: String,  },
+        furnishing: { type: String},
         ownership: { type: String },
-        usage: { type: String },
+        usage: { type: String,  },
         floor_number: { type: Number },
         parking_available: { type: Boolean, default: false }
     },
@@ -55,17 +55,32 @@ const PropertySchema = new mongoose.Schema({
         offices: { type: Number }
     },
 
-    reference_number: { type: String, required: true },
+    reference_number: { type: String,  },
 
     listing: {
         added_on: { type: Date , default: Date.now() },
         verified_on: { type: Date },
-        status: { type: String, enum: ['Active', 'Inactive', 'Pending'], default: 'Pending' }
+        status: { type: String, enum: ['Online', 'Offline', 'Pending'], default: 'Pending' }
     },
 
     approval_status: {
-        visible_to_buyers: { type: Boolean, default: false }
+            visible_to_buyers: { type: Boolean, default: false },
+            approved_by:{type: mongoose.Schema.Types.ObjectId, ref: "User"},  //admin
+            status:{type: String, enum: ['Accepted', 'Rejected', 'Pending'], default: 'Pending' },
+        //   admin_review:{
+            // admin_id:{type: mongoose.Schema.Types.ObjectId, ref: "User"},
+            // status:{type:String},
+            // reviewed_on:{type:String},
+            // comments: "Property meets guidelines, approved for listing."
+        // }
+        approved_to:{type: mongoose.Schema.Types.ObjectId, ref: "RequestedProperty"}
     },
+
+    requested_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'RequestedProperty',
+    
+      },
 
     nearby_buildings: { type: [String] },
 

@@ -52,7 +52,6 @@ const updateAgent = async (req, res) => {
       return res.status(403).json({ status: "failed", message: "Access denied. Only admins can update agents." });
     }
 
-
 // Get All Agents (Only Admin)
     // Find agent and update details
     const updatedAgent = await User.findOneAndUpdate(
