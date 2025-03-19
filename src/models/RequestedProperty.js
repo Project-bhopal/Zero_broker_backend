@@ -44,6 +44,10 @@ const requestedPropertySchema = new mongoose.Schema({
     ref: 'User', // Reference to the agent who accepted the request
     default: null,
   },
+  acceptedAt: {
+    type: Date, // New field to store acceptance date
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

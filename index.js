@@ -11,7 +11,7 @@ const profileRoutes = require("./src/routes/profileRoutes");
 const requestedPropertyRoutes = require('./src/routes/requestedPropertyRoutes');
 const propertycontroller = require("./src/routes/PropertyRoutes");
 
-app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
+// app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
 
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); 
@@ -19,8 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const corsOptions = {
-    // origin: "*", // 👈 for all user Use frontend domain
-    origin: "http://13.201.213.81:3000", // 👈 Use frontend domain
+    origin: "http://localhost:3000", // 👈 for all user Use frontend domain
+    // origin: "http://13.201.213.81:3000", // 👈 Use frontend domain
     credentials: true, // 👈 Allow cookies
     methods: ["GET", "POST", "PATCH", "DELETE"],
 };

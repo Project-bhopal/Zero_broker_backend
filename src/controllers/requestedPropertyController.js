@@ -100,7 +100,7 @@ exports.acceptRequest = async (req, res) => {
       return res.status(403).json({
         status: "failed",
         message: "Only agents can accept requests.",
-        error: "Access denied",
+        error: { message: "Access denied" },
         data: null
       });
     }
@@ -110,7 +110,7 @@ exports.acceptRequest = async (req, res) => {
       return res.status(404).json({
         status: "failed",
         message: "Property request not found.",
-        error: "Invalid request ID",
+        error: { message: "Invalid request ID" },
         data: null
       });
     }
@@ -119,13 +119,14 @@ exports.acceptRequest = async (req, res) => {
       return res.status(400).json({
         status: "failed",
         message: "Request is already accepted or rejected.",
-        error: "Invalid operation",
+        error: { message: "Invalid operation" },
         data: null
       });
     }
 
     request.status = "Accepted";
     request.assignedAgent = req.user._id;
+    request.acceptedAt = new Date(); // Save acceptance date
     await request.save();
 
     res.status(200).json({
@@ -139,11 +140,12 @@ exports.acceptRequest = async (req, res) => {
     res.status(500).json({
       status: "failed",
       message: "Server error",
-      error: error.message,
+      error: { message: error.message },
       data: null
     });
   }
 };
+
 
 
 
@@ -219,7 +221,7 @@ exports.getAcceptedAgentsForMyRequests = async (req, res) => {
     const acceptedRequests = await RequestedProperty.find({
       seller: req.user._id,
       status: "Accepted"
-    }).populate("assignedAgent", "fullname email");
+    }).populate("assignedAgent", "fullname email mobile");
 
     if (!acceptedRequests.length) {
       return res.status(404).json({
