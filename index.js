@@ -11,6 +11,7 @@ const profileRoutes = require("./src/routes/profileRoutes");
 const requestedPropertyRoutes = require('./src/routes/requestedPropertyRoutes');
 const propertyRoutes=require("./src/routes/PropertyRoutes")
 const propertiesFilter=require("./src/routes/propertFiletrRoutes")
+const chatBotRoutes=require("./src/routes/ChatBotRoutes")
 
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); // Serve static files
@@ -45,6 +46,7 @@ app.use("/api/v1/profile", profileRoutes);
 app.use('/api/v1/property', propertyRoutes);
 app.use("/api/v1/requestproperty",requestedPropertyRoutes)
 app.use('/api/v1',propertiesFilter)
+app.use("/api/v1/chatbot",chatBotRoutes)
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
