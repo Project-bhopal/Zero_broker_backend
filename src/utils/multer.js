@@ -7,6 +7,8 @@ const srcDir = path.join(__dirname, ".."); // Adjust this based on your folder s
 const uploadDir = path.join(srcDir, "uploads"); // Create 'uploads' inside the existing 'src'
 const imagesDir = path.join(uploadDir, "images");
 const videosDir = path.join(uploadDir, "videos");
+const bannersDir = path.join(uploadDir, "banners");
+const offersDir = path.join(uploadDir, "offers");
 
 // Function to create directories if they don't exist
 const createDirectories = () => {
@@ -19,6 +21,13 @@ const createDirectories = () => {
   if (!fs.existsSync(videosDir)) {
     fs.mkdirSync(videosDir, { recursive: true });
   }
+  if (!fs.existsSync(bannersDir)) {
+    fs.mkdirSync(bannersDir, { recursive: true });
+  }
+  if (!fs.existsSync(offersDir)) {
+    fs.mkdirSync(offersDir, { recursive: true });
+  }
+  
 };
 createDirectories();
 
@@ -34,7 +43,15 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (!fs.existsSync(uploadDir)) createDirectories(); // Ensure folders exist before storing files
     if (file.mimetype.startsWith("image/")) {
-      cb(null, imagesDir);
+      if (req.url.includes("/create")) {
+        cb(null, bannersDir);
+      }
+      else if (req.baseUrl.includes("/offers")) {
+        cb(null, offersDir);
+      } 
+      else{
+        cb(null, imagesDir);
+      }
     } else if (file.mimetype.startsWith("video/")) {
       cb(null, videosDir);
     } else {
