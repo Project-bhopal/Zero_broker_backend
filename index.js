@@ -12,6 +12,7 @@ const requestedPropertyRoutes = require('./src/routes/requestedPropertyRoutes');
 
 const propertyRoutes=require("./src/routes/PropertyRoutes")
 const propertiesFilter=require("./src/routes/propertFiletrRoutes")
+const { errorHandler } = require("./src/middleware/errorHandler");
 
 
 // app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
@@ -45,6 +46,8 @@ app.use("/api/v1/requestproperty",requestedPropertyRoutes)
 app.use('/api/v1',propertiesFilter)
 
 
+// Global Error Handler (Must be at the bottom)
+app.use(errorHandler);
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

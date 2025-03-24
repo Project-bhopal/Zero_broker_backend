@@ -51,7 +51,7 @@ router.put(
      requestedPropertyController.acceptRequest
 );
 
-module.exports = router;
+
 
 
 
@@ -88,3 +88,5 @@ router.get(
      requestedPropertyController.deleteRequest
    );
    
+
+   module.exports = router;

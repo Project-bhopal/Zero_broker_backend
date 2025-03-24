@@ -1,101 +1,82 @@
-const mongoose = require('mongoose');
-
+const mongoose =require("mongoose")
 const PropertySchema = new mongoose.Schema({
-    name: { type: String, },
+    name: { type: String },
     title: { type: String, required: true },
     description: { type: String },
     price: { type: Number, required: true },
     currency: { type: String, required: true },
 
     location: {
-        country: { type: String },
-        emirate: { type: String },
-        city: { type: String },
-        landmark: { type: String },
-        address: { type: String },
-        latitude: { type: Number },
-        longitude: { type: Number },
-        postal_code: { type: String },
-        community: { type: String },
-        neighborhood: { type: String },
-        street: { type: String },
-        building_name: { type: String },
-        floor: { type: Number },
-        apartment_number: { type: String }
+        country: { type: String, default: "" },
+        emirate: { type: String, default: "" },
+        city: { type: String, default: "" },
+        landmark: { type: String, default: "" },
+        address: { type: String, default: "" },
+        latitude: { type: Number, default: null },
+        longitude: { type: Number, default: null },
+        neighborhood: { type: String, default: "" },
+        street: { type: String, default: "" },
+        floor: { type: Number, default: null },
+        apartment_number: { type: String, default: "" }
     },
 
     details: {
-        property_type: { type: String, },
-        purpose: { type: String,  },
-        bedrooms: { type: Number, },
-        bathrooms: { type: Number, },
+        property_type: { type: String, default: "" },
+        purpose: { type: String, default: "" },
+        bedrooms: { type: Number, default: 0 },
+        bathrooms: { type: Number, default: 0 },
+        usage: { type: String, default: "" },
         size: {
-            value: { type: Number },
-            unit: { type: String}
+            value: { type: Number, default: 0 },
+            unit: { type: String, default: "" }
         },
-        completion_status: { type: String,  },
-        furnishing: { type: String},
-        ownership: { type: String },
-        usage: { type: String,  },
-        floor_number: { type: Number },
+        completion_status: { type: String, default: "" },
+        furnishing: { type: String, default: "" },
+        ownership: { type: String, default: "" },
         parking_available: { type: Boolean, default: false }
     },
 
-    other_amenities: { type: [String] },
-    features_amenities: { type: [String] },
+    other_amenities: { type: [String], default: [] },
+    features_amenities: { type: [String], default: [] },
 
     building_information: {
-        name: { type: String },
-        year_of_completion: { type: Number },
-        total_floors: { type: Number },
+        name: { type: String, default: "" },
+        year_of_completion: { type: Number, default: null },
+        total_floors: { type: Number, default: null },
         total_building_area: {
-            value: { type: Number },
-            unit: { type: String }
+            value: { type: Number, default: 0 },
+            unit: { type: String, default: "" }
         },
-        offices: { type: Number }
+        offices: { type: Number, default: 0 }
     },
 
-    reference_number: { type: String,  },
+    reference_number: { type: String, default: "" },
 
-    listing: {
-        added_on: { type: Date , default: Date.now() },
-        verified_on: { type: Date },
-        status: { type: String, enum: ['Online', 'Offline', 'Pending'], default: 'Pending' }
-    },
+    requested_id: { type: mongoose.Schema.Types.ObjectId, ref: "RequestedProperty" }, // Seller's initial request
+    agent_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Agent who accepted and listed property
 
     approval_status: {
-            visible_to_buyers: { type: Boolean, default: false },
-            approved_by:{type: mongoose.Schema.Types.ObjectId, ref: "User"},  //admin
-            status:{type: String, enum: ['Accepted', 'Rejected', 'Pending'], default: 'Pending' },
-        //   admin_review:{
-            // admin_id:{type: mongoose.Schema.Types.ObjectId, ref: "User"},
-            // status:{type:String},
-            // reviewed_on:{type:String},
-            // comments: "Property meets guidelines, approved for listing."
-        // }
-        approved_to:{type: mongoose.Schema.Types.ObjectId, ref: "RequestedProperty"}
+        visible_to_buyers: { type: Boolean, default: false },
+        approved_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Admin ID who approved
+        status: { type: String, enum: ["Approved", "Rejected", "Pending"], default: "Pending" },
+        approved_on: { type: Date, default: null }
     },
 
-    requested_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'RequestedProperty',
-    
-      },
-
-    nearby_buildings: { type: [String] },
-
-    listing_platform: { type: String },
+    nearby_buildings: { type: [String], default: [] },
+    listing_platform: { type: String, default: "" },
 
     developer_notes: {
-        image_count: { type: Number },
-        images: { type: [String] },
-        video_count: { type: Number },
-        videos: { type: [String] },
+        image_count: { type: Number, default: 0 },
+        images: { type: [String], default: [] },
+        video_count: { type: Number, default: 0 },
+        videos: { type: [String], default: [] },
         video_available: { type: Boolean, default: false },
         virtual_tour_available: { type: Boolean, default: false },
-        contact_options: { type: [String] },
-        tags: { type: [String] }
-    }
+        tags: { type: [String], default: [] }
+    },
+
+    created_at: { type: Date, default: Date.now }
 });
+
 
 module.exports = mongoose.model('Property', PropertySchema);

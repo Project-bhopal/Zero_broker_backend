@@ -3,12 +3,11 @@ const RequestedProperty = require("../models/RequestedProperty");
 // Create a new requested property listing by seller
 exports.createRequest = async (req, res) => {
   try {
-    if (req.user.role !== "seller" ) {
+    if (req.user.role !== "seller") {
       return res.status(403).json({
         status: "failed",
         message: "Only sellers can request property listings.",
         error: "Access denied",
-        data: null
       });
     }
 
@@ -19,11 +18,10 @@ exports.createRequest = async (req, res) => {
         status: "failed",
         message: "All required fields must be filled.",
         error: "Missing required fields",
-        data: null
       });
     }
 
-    const newRequest = new RequestedProperty({
+    const newRequest = await RequestedProperty.create({
       seller: req.user._id,
       propertyName,
       propertyType,
@@ -31,16 +29,13 @@ exports.createRequest = async (req, res) => {
       area,
       address,
       location,
-      reasonForSaleOrRent
+      reasonForSaleOrRent,
     });
-
-    await newRequest.save();
 
     res.status(201).json({
       status: "success",
       message: "Property request submitted successfully.",
       data: newRequest,
-      error: null
     });
   } catch (error) {
     console.error(error);
@@ -48,100 +43,70 @@ exports.createRequest = async (req, res) => {
       status: "failed",
       message: "Server error",
       error: error.message,
-      data: null
     });
   }
 };
 
-// Get all pending requests for agents
+// Get all pending property requests for agents
 exports.getAllRequestsForAgents = async (req, res) => {
   try {
-    if (req.user.role !== "agent") {
-      return res.status(403).json({
-        status: "failed",
-        message: "Only agents can view property requests.",
-        error: "Access denied",
-        data: null
-      });
-    }
-
-    const requests = await RequestedProperty.find({ status: "Pending" }).populate("seller", "name email");
-
-    if (!requests.length) {
-      return res.status(404).json({
-        status: "failed",
-        message: "No pending property requests found.",
-        error: "No data available",
-        data: null
-      });
-    }
+    // Fetch all pending requests with seller details
+    const requests = await RequestedProperty.find({ status: "Pending" })
+      .populate("seller", "fullname email mobile") // Get seller name & email
+      .lean(); // Optimize performance for read-only queries
 
     res.status(200).json({
       status: "success",
-      message: "Pending property requests retrieved.",
+      message: requests.length
+        ? "Pending property requests retrieved."
+        : "No pending property requests found.",
       data: requests,
-      error: null
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching pending requests:", error);
     res.status(500).json({
       status: "failed",
       message: "Server error",
       error: error.message,
-      data: null
     });
   }
 };
-
-// Agent accepts a request
+// Agent accepts a property request
 exports.acceptRequest = async (req, res) => {
   try {
-    if (req.user.role !== "agent") {
-      return res.status(403).json({
-        status: "failed",
-        message: "Only agents can accept requests.",
-        error: { message: "Access denied" },
-        data: null
-      });
-    }
+    // Find and update the request in a single query
+    const request = await RequestedProperty.findOneAndUpdate(
+      { _id: req.params.id, status: "Pending" }, // Only update if it's "Pending"
+      {
+        status: "Accepted",
+        assignedAgent: req.user._id,
+        acceptedAt: Date.now(),
+      },
+      { new: true } // Return updated document
+    );
 
-    const request = await RequestedProperty.findById(req.params.id);
+    // If no request was updated, it means it was either not found or not "Pending"
     if (!request) {
-      return res.status(404).json({
-        status: "failed",
-        message: "Property request not found.",
-        error: { message: "Invalid request ID" },
-        data: null
-      });
-    }
-
-    if (request.status !== "Pending") {
       return res.status(400).json({
         status: "failed",
-        message: "Request is already accepted or rejected.",
-        error: { message: "Invalid operation" },
-        data: null
+        message: "Request not found or already processed.",
+        error: {
+          message: "The request ID may be incorrect or it's already Accepted/Rejected.",
+        },
       });
     }
-
-    request.status = "Accepted";
-    request.assignedAgent = req.user._id;
-    request.acceptedAt = new Date(); // Save acceptance date
-    await request.save();
 
     res.status(200).json({
       status: "success",
       message: "Request accepted successfully.",
       data: request,
-      error: null
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error accepting request:", error);
     res.status(500).json({
       status: "failed",
       message: "Server error",
       error: { message: error.message },
-      data: null
     });
   }
 };
@@ -160,7 +125,6 @@ exports.getMyRequestedProperties = async (req, res) => {
         status: "failed",
         message: "You have not made any property requests.",
         error: "No data available",
-        data: null
       });
     }
 
@@ -168,7 +132,6 @@ exports.getMyRequestedProperties = async (req, res) => {
       status: "success",
       message: "Your requested properties retrieved successfully.",
       data: myRequests,
-      error: null
     });
   } catch (error) {
     console.error(error);
@@ -176,7 +139,6 @@ exports.getMyRequestedProperties = async (req, res) => {
       status: "failed",
       message: "Server error",
       error: error.message,
-      data: null
     });
   }
 };
@@ -187,14 +149,13 @@ exports.getAcceptedRequestsByAgent = async (req, res) => {
     const acceptedRequests = await RequestedProperty.find({
       assignedAgent: req.user._id,
       status: "Accepted"
-    }).populate("seller", "fullname email");
+    }).populate("seller", "fullname email mobile");
 
     if (!acceptedRequests.length) {
       return res.status(404).json({
         status: "failed",
         message: "You have not accepted any property requests.",
         error: "No data available",
-        data: null
       });
     }
 
@@ -202,7 +163,6 @@ exports.getAcceptedRequestsByAgent = async (req, res) => {
       status: "success",
       message: "Accepted property requests retrieved successfully.",
       data: acceptedRequests,
-      error: null
     });
   } catch (error) {
     console.error(error);
@@ -210,7 +170,6 @@ exports.getAcceptedRequestsByAgent = async (req, res) => {
       status: "failed",
       message: "Server error",
       error: error.message,
-      data: null
     });
   }
 };
@@ -227,8 +186,9 @@ exports.getAcceptedAgentsForMyRequests = async (req, res) => {
       return res.status(404).json({
         status: "failed",
         message: "No agents have accepted your property requests yet.",
-        error: "No data available",
-        data: null
+        error:{
+          message:"No data available"
+        }
       });
     }
 
@@ -236,7 +196,6 @@ exports.getAcceptedAgentsForMyRequests = async (req, res) => {
       status: "success",
       message: "Agents who accepted your property requests retrieved successfully.",
       data: acceptedRequests,
-      error: null
     });
   } catch (error) {
     console.error(error);
@@ -244,7 +203,6 @@ exports.getAcceptedAgentsForMyRequests = async (req, res) => {
       status: "failed",
       message: "Server error",
       error: error.message,
-      data: null
     });
   }
 };
