@@ -52,7 +52,8 @@ exports.getAllRequestsForAgents = async (req, res) => {
   try {
     // Fetch all pending requests with seller details
     const requests = await RequestedProperty.find({ status: "Pending" })
-      .populate("seller", "fullname email mobile") // Get seller name & email
+      .populate("seller", "fullname email mobile")
+      .sort({ createdAt: -1 }) // Get seller name & email
       .lean(); // Optimize performance for read-only queries
 
     res.status(200).json({
@@ -118,7 +119,7 @@ exports.acceptRequest = async (req, res) => {
 //  Seller views all their requested properties
 exports.getMyRequestedProperties = async (req, res) => {
   try {
-    const myRequests = await RequestedProperty.find({ seller: req.user._id });
+    const myRequests = await RequestedProperty.find({ seller: req.user._id }).sort({ createdAt: -1 });;
 
     if (!myRequests.length) {
       return res.status(404).json({
@@ -149,7 +150,10 @@ exports.getAcceptedRequestsByAgent = async (req, res) => {
     const acceptedRequests = await RequestedProperty.find({
       assignedAgent: req.user._id,
       status: "Accepted"
-    }).populate("seller", "fullname email mobile");
+    })
+      .populate("seller", "fullname email mobile")
+      .sort({ createdAt: -1 })
+      .select("_id propertyName propertyType purpose area address location reasonForSaleOrRent seller assignedAgent status acceptedAt createdAt");
 
     if (!acceptedRequests.length) {
       return res.status(404).json({
@@ -162,7 +166,21 @@ exports.getAcceptedRequestsByAgent = async (req, res) => {
     res.status(200).json({
       status: "success",
       message: "Accepted property requests retrieved successfully.",
-      data: acceptedRequests,
+      data: acceptedRequests.map(request => ({
+        request_id: request._id, // Explicitly sending request_id
+        propertyName: request.propertyName,
+        propertyType: request.propertyType,
+        purpose: request.purpose,
+        area: request.area,
+        address: request.address,
+        location: request.location,
+        reasonForSaleOrRent: request.reasonForSaleOrRent,
+        seller: request.seller,
+        assignedAgent: request.assignedAgent,
+        status: request.status,
+        acceptedAt: request.acceptedAt, // ✅ Include acceptedAt
+        createdAt: request.createdAt
+      })),
     });
   } catch (error) {
     console.error(error);
@@ -174,13 +192,15 @@ exports.getAcceptedRequestsByAgent = async (req, res) => {
   }
 };
 
+
 //  Seller views which agent accepted their request
 exports.getAcceptedAgentsForMyRequests = async (req, res) => {
   try {
     const acceptedRequests = await RequestedProperty.find({
       seller: req.user._id,
       status: "Accepted"
-    }).populate("assignedAgent", "fullname email mobile");
+    }).populate("assignedAgent", "fullname email mobile")
+    .sort({ createdAt: -1 });;
 
     if (!acceptedRequests.length) {
       return res.status(404).json({
@@ -217,7 +237,7 @@ exports.getAllRequests = async (req, res) => {
   try {
     const requests = await RequestedProperty.find()
       .populate("seller", "fullname email")
-      .populate("assignedAgent", "fullname email");
+      .populate("assignedAgent", "fullname email") .sort({ createdAt: -1 });
 
     res.status(200).json({
       status: "success",
@@ -239,7 +259,7 @@ exports.getAllRequests = async (req, res) => {
 exports.getPendingRequests = async (req, res) => {
   try {
     const requests = await RequestedProperty.find({ status: "Pending" })
-      .populate("seller", "fullname email");
+      .populate("seller", "fullname email")  .sort({ createdAt: -1 }); 
 
     res.status(200).json({
       status: "success",
@@ -262,7 +282,7 @@ exports.getAcceptedRequests = async (req, res) => {
   try {
     const requests = await RequestedProperty.find({ status: "Accepted" })
       .populate("seller", "fullname email")
-      .populate("assignedAgent", "fullname email");
+      .populate("assignedAgent", "fullname email") .sort({ createdAt: -1 });
 
     res.status(200).json({
       status: "success",
@@ -290,7 +310,6 @@ exports.deleteRequest = async (req, res) => {
         status: "failed",
         message: "Property request not found.",
         error: "Invalid request ID",
-        data: null
       });
     }
 
@@ -299,15 +318,12 @@ exports.deleteRequest = async (req, res) => {
     res.status(200).json({
       status: "success",
       message: "Property request deleted successfully.",
-      data: null,
-      error: null
     });
   } catch (error) {
     res.status(500).json({
       status: "failed",
       message: "Server error",
       error: error.message,
-      data: null
     });
   }
 };

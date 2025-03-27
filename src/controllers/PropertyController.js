@@ -37,6 +37,9 @@ exports.createProperty = async (req, res) => {
     });
 
     await newProperty.save();
+    
+    // Update the requested property's status to "Listed"
+    await RequestedProperty.findByIdAndUpdate(nestedBody.requested_id, { status: "Listed" });
 
     res.status(201).json({
       success: true,
@@ -68,22 +71,31 @@ exports.createProperty = async (req, res) => {
 
 exports.updateProperty = async (req, res) => {
   try {
+    const existingProperty = await Property.findById(req.params.id);
+    if (!existingProperty) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
     const nestedBody = nestify(req.body);
     const parsedData = parseFields(nestedBody, req.files);
 
-    // ✅ Use $set to update only provided fields
+    // ✅ Merge existing nested fields with new data
+    const updatedFields = { ...existingProperty._doc }; // Start with existing data
+    Object.keys(parsedData).forEach((key) => {
+      if (typeof parsedData[key] === "object" && parsedData[key] !== null) {
+        // ✅ Merge nested objects instead of replacing them
+        updatedFields[key] = { ...existingProperty[key], ...parsedData[key] };
+      } else {
+        updatedFields[key] = parsedData[key]; // Directly update non-objects
+      }
+    });
+
+    // ✅ Perform update
     const updatedProperty = await Property.findByIdAndUpdate(
       req.params.id,
-      { $set: parsedData }, // Only update provided fields
+      { $set: updatedFields },
       { new: true, runValidators: true }
     );
-
-    if (!updatedProperty) {
-      return res.status(404).json({
-        success: false,
-        message: "Property not found",
-      });
-    }
 
     res.status(200).json({
       success: true,
@@ -99,6 +111,8 @@ exports.updateProperty = async (req, res) => {
     });
   }
 };
+
+
 
 exports.approveProperty = async (req, res) => {
   try {

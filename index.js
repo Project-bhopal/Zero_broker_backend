@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const dotenv = require("dotenv");
 const cors = require('cors');
+const path=require("path")
 dotenv.config();
 const connectdb = require("./src/config/db");
 const cookieParser = require("cookie-parser");
@@ -19,7 +20,7 @@ const { errorHandler } = require("./src/middleware/errorHandler");
 
 
 app.use(express.json());
-app.use("/uploads", express.static("uploads")); 
+app.use('/uploads', express.static(path.join(__dirname, 'src','uploads')));
 app.use(express.urlencoded({ extended: true })); 
 app.use(cookieParser());
 
