@@ -9,6 +9,7 @@ const imagesDir = path.join(uploadDir, "images");
 const videosDir = path.join(uploadDir, "videos");
 const bannersDir = path.join(uploadDir, "banners");
 const offersDir = path.join(uploadDir, "offers");
+const adsDir = path.join(uploadDir,"ads")
 
 // Function to create directories if they don't exist
 const createDirectories = () => {
@@ -27,7 +28,9 @@ const createDirectories = () => {
   if (!fs.existsSync(offersDir)) {
     fs.mkdirSync(offersDir, { recursive: true });
   }
-  
+  if(!fs.existsSync(adsDir)){
+    fs.mkdirSync(adsDir,{recursive: true})
+  }
 };
 createDirectories();
 
@@ -48,7 +51,9 @@ const storage = multer.diskStorage({
       }
       else if (req.baseUrl.includes("/offers")) {
         cb(null, offersDir);
-      } 
+      } else if (req.baseUrl.includes("/ads")) {
+        cb(null, adsDir);
+      }
       else{
         cb(null, imagesDir);
       }

@@ -14,6 +14,7 @@ const OfferRoutes=require("./src/routes/offerRoutes")
 const propertyRoutes=require("./src/routes/PropertyRoutes")
 const propertiesFilter=require("./src/routes/propertFiletrRoutes")
 const chatBotRoutes=require("./src/routes/ChatBotRoutes")
+const adsRouters=require("./src/routes/adsRoutes")
 
 
 app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
@@ -47,6 +48,7 @@ app.use('/api/v1',propertiesFilter)
 app.use("/api/v1/chatbot",chatBotRoutes)
 app.use("/api/banners",BannerRoutes)
 app.use("/api/offers",OfferRoutes)
+app.use("/api/ads",adsRouters)
 
 
 const port = process.env.PORT || 5000;

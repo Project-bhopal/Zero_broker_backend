@@ -44,7 +44,6 @@ exports.createBanner = async (req, res) => {
 };
 
 
-
 // exports.getAllBanners = async (req, res) => {
 //   try {
 //     const banners = await Banner.find({});
