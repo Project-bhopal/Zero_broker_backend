@@ -7,16 +7,15 @@ const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({
-            status: "failed",
-            message: "Validation error",
-            errors: errors.array().map(err => ({ msg: err.msg })) 
+            status: "Failed",
+            error: {
+                message: errors.array({ onlyFirstError: true })[0].msg, // Send error inside `error` object
+            }
         });
     }
     next();
 };
-
 // ✅ Signup Validation
-
 const validateSignup = [
     body("fullname")
         .trim()
@@ -52,15 +51,16 @@ const validateSignup = [
 
     body("mobile")
         .notEmpty().withMessage("Mobile is required")
-        .isNumeric().withMessage("Mobile must be a string")
+        .isNumeric().withMessage("Mobile must be a number")
         .matches(/^[6-9]\d{9}$/).withMessage("Must be a valid mobile format.")
         .custom(async (value) => {
             const existingUser = await User.findOne({ mobile: value });
             if (existingUser) {
-                throw new Error('Mobile number is already registered');
+                throw new Error("Mobile number is already registered");
             }
             return true;
         }),
+
     handleValidationErrors,
 ];
 

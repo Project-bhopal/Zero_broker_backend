@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const dotenv = require("dotenv");
 const cors = require('cors');
+const path=require("path")
 dotenv.config();
 const connectdb = require("./src/config/db");
 const cookieParser = require("cookie-parser");
@@ -13,23 +14,20 @@ const BannerRoutes=require("./src/routes/bannerRoutes")
 const OfferRoutes=require("./src/routes/offerRoutes")
 const propertyRoutes=require("./src/routes/PropertyRoutes")
 const propertiesFilter=require("./src/routes/propertFiletrRoutes")
-const chatBotRoutes=require("./src/routes/ChatBotRoutes")
-const adsRouters=require("./src/routes/adsRoutes")
+const { errorHandler } = require("./src/middleware/errorHandler");
 
 
-app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
-
-
+// app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
 
 
 app.use(express.json());
-app.use("/uploads", express.static("uploads")); 
+app.use('/uploads', express.static(path.join(__dirname, 'src','uploads')));
 app.use(express.urlencoded({ extended: true })); 
 app.use(cookieParser());
 
 const corsOptions = {
-    // origin: "*", // 👈 for all user Use frontend domain
-    origin: "http://13.201.213.81:3000", // 👈 Use frontend domain
+    origin: "http://localhost:3000", // 👈 for all user Use frontend domain
+    // origin: "http://13.201.213.81:3000", // 👈 Use frontend domain
     credentials: true, // 👈 Allow cookies
     methods: ["GET", "POST", "PATCH", "DELETE"],
 };
@@ -54,6 +52,8 @@ app.use("/api/ads",adsRouters)
 
 
 
+// Global Error Handler (Must be at the bottom)
+app.use(errorHandler);
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

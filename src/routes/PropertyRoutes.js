@@ -4,8 +4,10 @@ const router = express.Router();
 const {upload} = require("../utils/multer"); 
 const {authorizeRoles,accessTokenVerify}=require("../middleware/authMiddleware")
 
-const uploadfiles = upload.fields([{ name: "images", maxCount: 5 }, { name: "videos", maxCount: 2 }])
+const uploadfiles = upload.fields([{ name: "images", maxCount: 15 }, { name: "videos", maxCount: 2 }])
 
+// Route to get all approved properties
+router.get("/approved", propertyController.getApprovedProperties);
 
 router.post("/create",accessTokenVerify, 
   authorizeRoles("agent"), 
@@ -25,6 +27,6 @@ router.get("/getProperties",accessTokenVerify, authorizeRoles("admin"), property
 
 router.get("/getPropertiesByAgent/:id",accessTokenVerify, authorizeRoles("agent"),propertyController.getPropertiesByAgent)
 
-router.delete("/:id",accessTokenVerify, authorizeRoles("agent"), propertyController.deleteProperty); 
+router.delete("/delete/:id",accessTokenVerify, authorizeRoles("admin"), propertyController.deleteProperty); 
 
 module.exports = router;

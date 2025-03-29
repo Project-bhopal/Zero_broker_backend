@@ -200,66 +200,72 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ $or: [{ email }, { mobile }] });
 
     if (!user) {
-      return res.status(400).json({status:"failed", message: "User not found" , error: { message: "Invalid credentials" },
+      return res.status(400).json({
+        status: "failed", 
+        message: "User not found", 
+        error: { message: "Invalid credentials" },
       });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({status: "Failed", message: "Invalid credentials", 
+      return res.status(400).json({
+        status: "Failed", 
+        message: "Invalid credentials", 
         error: { message: "Invalid credentials" }
       });
     }
 
-    // Generate  accessToken & refreshToken
-    const {accessToken,refreshToken} = user.generateAuthToken();
+    // Generate accessToken & refreshToken
+    const { accessToken, refreshToken } = user.generateAuthToken();
     const refreshTokenSave = new RefreshToken({
       token: refreshToken,
       userId: user._id,
       expiresAt: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
     await refreshTokenSave.save();
-    // Set token in HTTP-only cookie
+
+    // Set cookie options based on environment (local or production)
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Set accessToken in HTTP-only cookie
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      // secure: process.env.NODE_ENV,
-      secure: false, // 👈 Set to false if using an IP (update to true after setting up HTTPS)
-      // sameSite: "strict",
-      sameSite: "Lax",
+      httpOnly: isProduction,
+      secure: isProduction, // Use secure cookies only in production
+      sameSite: isProduction ? 'Strict' : 'Lax', // 'Strict' for production, 'Lax' for localhost
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-     // Set token in HTTP-only cookie
-     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      // secure: process.env.NODE_ENV,
-      secure: false, // 👈 Set to false if using an IP (update to true after setting up HTTPS)
-      // sameSite: "strict",
-      sameSite: "Lax",
-      maxAge: 7 * 60 * 60 * 1000, // 7 day
+
+    // Set refreshToken in HTTP-only cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: isProduction,
+      secure: isProduction, // Use secure cookies only in production
+      sameSite: isProduction ? 'Strict' : 'Lax', // 'Strict' for production, 'Lax' for localhost
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
-   
-     res.cookie("role", user.role, {
-      httpOnly: true,
-      // secure: process.env.NODE_ENV,
-      secure: false, // 👈 Set to false if using an IP (update to true after setting up HTTPS)
-      // sameSite: "strict",
-      sameSite: "Lax",
-      maxAge: 7 * 60 * 60 * 1000, // 7 day
+
+    // Set role in HTTP-only cookie
+    res.cookie("role", user.role, {
+      httpOnly: isProduction,
+      secure: isProduction, // Use secure cookies only in production
+      sameSite: isProduction ? 'Strict' : 'Lax', // 'Strict' for production, 'Lax' for localhost
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
-   
-    res.status(201).json({ 
+
+    res.status(201).json({
       status: "Success",
       message: "User logged in successfully.",
-       data: {
+      data: {
         user_id: user._id,
         full_name: user.fullname,
         email: user.email,
-        role:user.role,
-        accessToken:accessToken,
-        refreshToken:refreshToken,
+        role: user.role,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
         isVerified: user.isVerified
-    }});  
+      }
+    });
 
   } catch (error) {
     res.status(500).json({
@@ -269,6 +275,7 @@ exports.login = async (req, res) => {
     });
   }
 };
+
 //  **Reset Password**
 
 exports.resetPassword = async (req, res) => {

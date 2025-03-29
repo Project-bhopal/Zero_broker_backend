@@ -73,13 +73,33 @@ const updateProfile = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const userId = req.user.id; // Get user ID from auth middleware
-    const profile = await Profile.findOne({ user: userId }).populate("user", "fullname email mobile role");
+
+    // Find profile and populate user details
+    let profile = await Profile.findOne({ user: userId }).populate("user", "fullname email mobile role");
 
     if (!profile) {
-      return res.status(404).json({ status: "failed", message: "Profile not found" });
+      // If profile doesn't exist, fetch user details separately
+      const User = require("../models/User"); // Import the User model
+      const user = await User.findById(userId).select("fullname email mobile role");
+
+      if (!user) {
+        return res.status(404).json({ status: "failed", message: "User not found" });
+      }
+
+      return res.status(200).json({
+        status: "success",
+        message: "User details retrieved successfully",
+        data: {
+          user, // Return only user details if no profile exists
+        }
+      });
     }
 
-    res.status(200).json({ status: "success",message:"user find successfully" ,data:profile });
+    res.status(200).json({
+      status: "success",
+      message: "User profile retrieved successfully",
+      data: profile
+    });
   } catch (error) {
     res.status(500).json({ status: "failed", message: error.message });
   }
