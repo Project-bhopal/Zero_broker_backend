@@ -10,7 +10,8 @@ const userRoutes = require("./src/routes/UserRoutes");
 const agentRoutes = require("./src/routes/agentRoutes");
 const profileRoutes = require("./src/routes/profileRoutes");
 const requestedPropertyRoutes = require('./src/routes/requestedPropertyRoutes');
-
+const BannerRoutes=require("./src/routes/bannerRoutes")
+const OfferRoutes=require("./src/routes/offerRoutes")
 const propertyRoutes=require("./src/routes/PropertyRoutes")
 const propertiesFilter=require("./src/routes/propertFiletrRoutes")
 const { errorHandler } = require("./src/middleware/errorHandler");
@@ -41,10 +42,14 @@ app.get("/api", (req, res) => {
 app.use('/api/v1/auth', userRoutes);
 app.use("/api/v1/agents", agentRoutes);
 app.use("/api/v1/profile", profileRoutes);
-
 app.use('/api/v1/property', propertyRoutes);
 app.use("/api/v1/requestproperty",requestedPropertyRoutes)
 app.use('/api/v1',propertiesFilter)
+app.use("/api/v1/chatbot",chatBotRoutes)
+app.use("/api/banners",BannerRoutes)
+app.use("/api/offers",OfferRoutes)
+app.use("/api/ads",adsRouters)
+
 
 
 // Global Error Handler (Must be at the bottom)
