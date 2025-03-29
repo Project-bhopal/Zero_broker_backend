@@ -20,6 +20,8 @@ const adsRouters=require("./src/routes/adsRoutes")
 app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
 
 
+
+
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); 
 app.use(express.urlencoded({ extended: true })); 
@@ -49,6 +51,7 @@ app.use("/api/v1/chatbot",chatBotRoutes)
 app.use("/api/banners",BannerRoutes)
 app.use("/api/offers",OfferRoutes)
 app.use("/api/ads",adsRouters)
+
 
 
 const port = process.env.PORT || 5000;
