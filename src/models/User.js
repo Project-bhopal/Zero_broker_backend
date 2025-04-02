@@ -10,9 +10,15 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     mobile: { type: String, required: true, unique: true },
     role: { type: String, enum: ["seller", "buyer", "admin", "agent"], default: "buyer" },
+    interest: {
+      type: [String], // Array to allow multiple interests
+      default: [], // Initially empty
+    },
     // profilePhoto: { type: String },
     isGoogleUser: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
+    wallet: { type: mongoose.Schema.Types.ObjectId, ref: "Wallet" }, // Initially empty
+  subscriptions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subscription" }], // No active plans
   },
   { timestamps: true }
 );
