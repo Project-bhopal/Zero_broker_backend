@@ -1,13 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const {authorizeRoles,accessTokenVerify}=require("../middleware/authMiddleware")
-const propertyController = require("../controllers/propertyFilterController");
-const savedSearchController=require("../controllers/savedSearchController")
+const filterController=require("../controllers/filterController")
 
-router.get("/properties",accessTokenVerify,propertyController.getfilterData)
-router.post("/savedsearch",accessTokenVerify,authorizeRoles("buyer"),savedSearchController.saveSearch)
-router.get("/searches",accessTokenVerify,authorizeRoles("buyer"),savedSearchController.getAllSavedSearches)
-router.get('/:search_name',accessTokenVerify,authorizeRoles("buyer"),savedSearchController.getSearchProperties)
+router.get('/filter',filterController.getFilteredProperties)
+router.post("/savefilter", accessTokenVerify, filterController.saveFilter); // Save filter
+router.get("/myfilter", accessTokenVerify, filterController.getMyFilters); // Get my filters
 
 module.exports = router;
 

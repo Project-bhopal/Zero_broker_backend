@@ -2,6 +2,7 @@ const Property = require("../models/Property");
 const nestify = require("../utils/nestify");
 const parseFields = require("../utils/parseFields");
 const RequestedProperty = require('../models/RequestedProperty');
+const mongoose = require("mongoose");
 
 const generateReferenceNumber = () => {
   const prefix = "PROP"; // Custom prefix
@@ -159,15 +160,59 @@ exports.approveProperty = async (req, res) => {
   }
 };
 
- exports.getApprovedProperties = async (req, res) => {
+//  exports.getApprovedProperties = async (req, res) => {
+//   try {
+//       const approvedProperties = await Property.find({ "approval_status.status": "Approved" });
+//       res.status(200).json({ success: true, data: approvedProperties });
+//   } catch (error) {
+//       console.error("Error fetching approved properties:", error);
+//       res.status(500).json({ success: false, message: "Server Error" });
+//   }
+// };
+exports.getApprovedProperties = async (req, res) => {
   try {
-      const approvedProperties = await Property.find({ "approval_status.status": "Approved" });
+      const approvedProperties = await Property.find(
+          { "approval_status.status": "Approved" },
+          {
+              requested_id: 0,
+              agent_id: 0,
+              approval_status: 0,
+              building_information: 0,
+              other_amenities: 0,
+              features_amenities: 0,
+              nearby_buildings:0,
+              reference_number:0,
+              description:0
+          }
+      );
+
       res.status(200).json({ success: true, data: approvedProperties });
   } catch (error) {
       console.error("Error fetching approved properties:", error);
       res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+
+exports.getPropertyById = async (req, res) => {
+  try {
+      const { id } = req.params;
+
+      // Fetch property and exclude only agent_id, requested_id, and approval_status
+      const property = await Property.findById(id)
+
+      if (!property) {
+          return res.status(404).json({ success: false, message: "Property not found" });
+      }
+
+      res.status(200).json({ success: true, data: property });
+
+  } catch (error) {
+      console.error("Error fetching property:", error);
+      res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 
 
 exports.getAllProperties = async (req,res) => {
