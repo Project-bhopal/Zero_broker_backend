@@ -1,14 +1,10 @@
 const Plan = require("../models/Plan");
 
-exports.getPlansByRoleAndInterest = async (req, res) => {
+exports.getPlansByRoleAndCategory = async (req, res) => {
   try {
-    const { role, interest } = req.user; // Extract from authenticated user
-
-    // Find plans that match the user's role and interest
-    const plans = await Plan.find({ 
-      role, 
-      category: { $in: interest } 
-    });
+    const { role } = req.user; // Extract user role from token
+    // Fetch plans based on role and category
+    const plans = await Plan.find({ role });
 
     res.status(200).json({ success: true, plans });
   } catch (error) {
