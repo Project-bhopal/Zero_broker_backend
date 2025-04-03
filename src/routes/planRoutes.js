@@ -4,6 +4,6 @@ const planController = require("../controllers/planController");
 const { accessTokenVerify, authorizeRoles } = require("../middleware/authMiddleware");
 
 // API Route: Get plans based on user role and interest
-router.get("/plans",accessTokenVerify, planController.getPlansByRoleAndInterest);
+router.get("/plans",accessTokenVerify, planController.getPlansByRoleAndCategory);
 
 module.exports = router;
