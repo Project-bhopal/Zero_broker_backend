@@ -17,6 +17,8 @@ const propertiesFilter=require("./src/routes/propertFiletrRoutes")
 const { errorHandler } = require("./src/middleware/errorHandler");
 const planRoutes = require("./src/routes/planRoutes");
 const subscriptionRoutes = require("./src/routes/subscriptionRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
+const webhookRoutes = require("./src/routes/stripeWebhook");
 
 
 // app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
@@ -51,8 +53,10 @@ app.use('/api/v1',propertiesFilter)
 app.use("/api/banners",BannerRoutes)
 app.use("/api/offers",OfferRoutes)
 // app.use("/api/ads",adsRouters)
-app.use("/api/v1/payment", planRoutes);
+app.use("/api/v1", planRoutes);
 app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/webhooks", webhookRoutes);
 
 
 
