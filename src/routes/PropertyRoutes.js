@@ -8,6 +8,7 @@ const uploadfiles = upload.fields([{ name: "images", maxCount: 15 }, { name: "vi
 
 // Route to get all approved properties
 router.get("/approved", propertyController.getApprovedProperties);
+router.get("/propertyById/:id", propertyController.getPropertyById);
 
 router.post("/create",accessTokenVerify, 
   authorizeRoles("agent"), 

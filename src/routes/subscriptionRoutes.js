@@ -1,9 +1,18 @@
 const express = require("express");
-const router = express.Router();
-const subscriptionController = require("../controllers/subscriptionController");
+const { createSubscription, getActiveSubscriptions, cancelSubscription, verifyPayment } = require("../controllers/subscriptionController");
+const { accessTokenVerify } = require("../middleware/authMiddleware");
 
-router.post("/subscribe", subscriptionController.createSubscription);
-router.get("/:userId", subscriptionController.getSubscription);
-router.put("/:userId/cancel", subscriptionController.cancelSubscription);
+const router = express.Router();
+
+// ✅ Create Subscription (Buy Plan)
+
+// ✅ Get Active Subscriptions
+router.get("/active", accessTokenVerify, getActiveSubscriptions);
+
+// ✅ Cancel Subscription
+router.post("/cancel", accessTokenVerify, cancelSubscription);
+
+// ✅ Verify Payment
+router.post("/verify-payment", accessTokenVerify, verifyPayment);
 
 module.exports = router;

@@ -18,6 +18,10 @@ const { errorHandler } = require("./src/middleware/errorHandler");
 const chatBotRoutes=require("./src/routes/ChatBotRoutes");
 const adsRouters=require("./src/routes/adsRoutes")
 const propertyReviewRoutes=require("./src/routes/propertyReviewRoutes")
+const planRoutes = require("./src/routes/planRoutes");
+const subscriptionRoutes = require("./src/routes/subscriptionRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
+const webhookRoutes = require("./src/routes/stripeWebhook");
 
 
 // app.set("trust proxy", 1); // 👈 Fix for AWS/Nginx
@@ -48,11 +52,17 @@ app.use("/api/v1/profile", profileRoutes);
 app.use('/api/v1/property', propertyRoutes);
 app.use("/api/v1/requestproperty",requestedPropertyRoutes)
 app.use('/api/v1',propertiesFilter)
-app.use("/api/v1/chatbot",chatBotRoutes)
+// app.use("/api/v1/chatbot",chatBotRoutes)
+
+app.use("/api/review",propertyReviewRoutes)
 app.use("/api/banners",BannerRoutes)
 app.use("/api/offers",OfferRoutes)
 app.use("/api/ads",adsRouters)
-app.use("/api/review",propertyReviewRoutes)
+app.use("/api/v1", planRoutes);
+app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/webhooks", webhookRoutes);
+
 
 
 // Global Error Handler (Must be at the bottom)
