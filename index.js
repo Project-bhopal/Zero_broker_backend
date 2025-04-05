@@ -52,7 +52,7 @@ app.use("/api/v1/profile", profileRoutes);
 app.use('/api/v1/property', propertyRoutes);
 app.use("/api/v1/requestproperty",requestedPropertyRoutes)
 app.use('/api/v1',propertiesFilter)
-// app.use("/api/v1/chatbot",chatBotRoutes)
+app.use("/api/v1/chatbot",chatBotRoutes)
 
 app.use("/api/review",propertyReviewRoutes)
 app.use("/api/banners",BannerRoutes)
