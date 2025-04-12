@@ -1,5 +1,6 @@
 const express = require("express");
 const authController = require("../controllers/UserController");
+const { sendOtpToUser } = require('../controllers/otpController');
 const router = express.Router();
 
 const {
@@ -9,6 +10,9 @@ const {
     validateResetPassword,
     generateOTP,
 } = require("../middleware/useValidations");
+
+
+router.post('/send-otp', sendOtpToUser);
 
 
     // User Signup

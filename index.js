@@ -33,7 +33,7 @@ const corsOptions = {
     origin: "http://localhost:3000", // 👈 for all user Use frontend domain
     // origin: "http://13.201.213.81:3000", // 👈 Use frontend domain
     credentials: true, // 👈 Allow cookies
-    methods: ["GET", "POST", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT","OPTION","PATCH", "DELETE"],
 };
 app.use(cors(corsOptions));
 
