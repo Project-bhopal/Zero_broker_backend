@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     mobile: { type: String, required: true, unique: true },
-    role: { type: String, enum: ["seller", "buyer", "admin", "agent"], default: "buyer" },
+    role: { type: String, enum: ["seller", "buyer","driver" ,"admin", "agent"], default: "buyer" },
     interest: {
       type: [String], // Array to allow multiple interests
       default: [], // Initially empty

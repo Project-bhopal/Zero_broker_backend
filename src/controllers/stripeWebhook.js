@@ -1,6 +1,6 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Subscription = require("../models/Subscription");
-// const Wallet=require("../models/wallet")
+const Wallet=require("../models/wallet")
 
 
 exports.handleStripeWebhook = async (req, res) => {
