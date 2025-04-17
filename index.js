@@ -15,7 +15,12 @@ const OfferRoutes=require("./src/routes/offerRoutes")
 const propertyRoutes=require("./src/routes/PropertyRoutes")
 const propertiesFilter=require("./src/routes/propertFiletrRoutes")
 const { errorHandler } = require("./src/middleware/errorHandler");
+
 const assignmentRoutes = require("./src/routes/assignmentRoutes");
+const chatBotRoutes=require("./src/routes/ChatBotRoutes");
+const adsRouters=require("./src/routes/adsRoutes")
+const propertyReviewRoutes=require("./src/routes/propertyReviewRoutes")
+
 const planRoutes = require("./src/routes/planRoutes");
 const subscriptionRoutes = require("./src/routes/subscriptionRoutes");
 const paymentRoutes = require("./src/routes/paymentRoutes");
@@ -50,12 +55,21 @@ app.use("/api/v1/profile", profileRoutes);
 app.use('/api/v1/property', propertyRoutes);
 app.use("/api/v1/requestproperty",requestedPropertyRoutes)
 app.use('/api/v1',propertiesFilter)
+
 app.use("/api/v1/driver", assignmentRoutes);
 // app.use("/api/v1/chatbot",chatBotRoutes)
 app.use("/api/banners",BannerRoutes)
 app.use("/api/offers",OfferRoutes)
-app.use('/api/v1/driver', require('./src/routes/assignmentRoutes'));
+
 // app.use("/api/ads",adsRouters)
+
+app.use("/api/v1/chatbot",chatBotRoutes)
+
+app.use("/api/review",propertyReviewRoutes)
+app.use("/api/banners",BannerRoutes)
+app.use("/api/offers",OfferRoutes)
+app.use("/api/ads",adsRouters)
+
 app.use("/api/v1", planRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/payments", paymentRoutes);
