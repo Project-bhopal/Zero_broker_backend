@@ -1,6 +1,6 @@
 const express = require("express");
 const authController = require("../controllers/UserController");
-const { sendOtpToUser } = require('../controllers/otpController');
+// const { sendOtpToUser } = require('../controllers/otpController');
 const router = express.Router();
 
 const {
@@ -12,7 +12,7 @@ const {
 } = require("../middleware/useValidations");
 const { accessTokenVerify } = require("../middleware/authMiddleware");
 
-router.post('/send-otp', sendOtpToUser);
+// router.post('/send-otp', sendOtpToUser);
 
 router.put("/change-role", accessTokenVerify, authController.changeRole);
     // User Signup
