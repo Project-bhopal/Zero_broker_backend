@@ -6,9 +6,11 @@ const catchAsync = require("../utils/catchAsync");
 
 // Allowed roles that can be created
 const allowedRoles = {
-  admin: ["agent", "driver"],
+  admin: ["subadmin", "agent", "driver"],
+  subadmin: ["agent", "driver"], // Subadmin  can manage agent and driver
   agent: ["driver"],
 };
+
 
 const isRoleAllowed = (creatorRole, targetRole) => {
   return allowedRoles[creatorRole]?.includes(targetRole);

@@ -10,11 +10,11 @@ const {
     validateResetPassword,
     generateOTP,
 } = require("../middleware/useValidations");
-
+const { accessTokenVerify } = require("../middleware/authMiddleware");
 
 router.post('/send-otp', sendOtpToUser);
 
-
+router.put("/change-role", accessTokenVerify, authController.changeRole);
     // User Signup
     router.post("/signup", validateSignup, authController.signup);
 
