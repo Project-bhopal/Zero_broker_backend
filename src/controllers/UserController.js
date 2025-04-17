@@ -7,6 +7,70 @@ const sendEmail = require("../utils/sendEmail");
 const Otp = require("../models/Otp");
 const RefreshToken = require("../models/RefreshToken");
 
+
+// change role 
+exports.changeRole = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Only toggle between buyer <-> seller
+    if (!["buyer", "seller"].includes(user.role)) {
+      return res.status(400).json({ message: "Only buyer and seller roles can be toggled" });
+    }
+
+    // Toggle role
+    user.role = user.role === "buyer" ? "seller" : "buyer";
+    await user.save();
+
+    // Generate tokens
+    const { accessToken, refreshToken } = user.generateAuthToken();
+
+    // Save refresh token in DB
+    const refreshTokenSave = new RefreshToken({
+      token: refreshToken,
+      userId: user._id,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
+    });
+    await refreshTokenSave.save();
+
+    // Set cookies
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: isProduction,
+      secure: isProduction,
+      sameSite: isProduction ? "Strict" : "Lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: isProduction,
+      secure: isProduction,
+      sameSite: isProduction ? "Strict" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.cookie("role", user.role, {
+      httpOnly: isProduction,
+      secure: isProduction,
+      sameSite: isProduction ? "Strict" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      message: `Role changed successfully to ${user.role}`,
+      newRole: user.role,
+    });
+  } catch (error) {
+    console.error("Error changing role:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 // Create User 
 exports.signup = async (req, res) => {
   try {
