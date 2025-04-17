@@ -45,7 +45,7 @@ app.use(cors(corsOptions));
 
 connectdb();
 
-app.get("/abc", (req, res) => {
+app.get("/", (req, res) => {
     res.send("Hello World!");
 });
 
