@@ -28,12 +28,12 @@ const createUserByRole = catchAsync(async (req, res) => {
     return sendResponse(res, 400, "failed", "Email already registered");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // const hashedPassword = await bcrypt.hash(password, 10);
 
   const newUser = await User.create({
     fullname,
     email,
-    password: hashedPassword,
+    password ,
     mobile,
     role,
     profilePhoto,

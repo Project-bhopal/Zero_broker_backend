@@ -1,12 +1,24 @@
 const Assignment = require('../models/Assignment');
 const Property = require('../models/Property');
 const User = require('../models/User');
+const path=require("path")
+const fs=require("fs")
 
-// Agent assigns property to driver
 exports.assignProperty = async (req, res) => {
   try {
     const { propertyId, driverId } = req.body;
     const agentId = req.user.id;
+
+    // Validate request body
+    if (!propertyId || !driverId) {
+      return res.status(400).json({ message: 'propertyId and driverId are required' });
+    }
+
+    // Check if property exists
+    const property = await Property.findById(propertyId);
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
 
     // Check if driver exists and is a driver
     const driver = await User.findById(driverId);
@@ -14,6 +26,35 @@ exports.assignProperty = async (req, res) => {
       return res.status(400).json({ message: 'Invalid driver' });
     }
 
+    // Check if assignment already exists with full driver details
+    const existingAssignment = await Assignment.findOne({ 
+      propertyId, 
+      driverId,
+      status: { $nin: ['rejected', 'declined'] }
+    }).populate('driverId', 'fullname mobile email vehicleInfo');
+
+    if (existingAssignment) {
+      return res.status(409).json({ 
+        success: false,
+        message: 'This property is already assigned to a driver',
+        data: {
+          existingAssignment: {
+            _id: existingAssignment._id,
+            status: existingAssignment.status,
+            assignedAt: existingAssignment.createdAt,
+            driver: existingAssignment.driverId, // Full driver details
+            currentAgent: existingAssignment.agentId // If you want agent info too
+          },
+          attemptedAssignment: {
+            propertyId,
+            driverId,
+            agentId
+          }
+        }
+      });
+    }
+
+    // Create new assignment
     const assignment = new Assignment({
       propertyId,
       agentId,
@@ -22,70 +63,302 @@ exports.assignProperty = async (req, res) => {
     });
 
     await assignment.save();
-    res.status(201).json(assignment);
+
+    // Populate the response
+    const populatedAssignment = await Assignment.findById(assignment._id)
+      .populate('propertyId', 'address price')
+      .populate('driverId', 'fullname mobile email');
+
+    res.status(201).json({
+      success: true,
+      message: 'Property assigned successfully',
+      data: populatedAssignment
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Assignment error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to assign property',
+      error: error.message 
+    });
   }
 };
 
-// Driver accepts/rejects assignment
-exports.respondToAssignment = async (req, res) => {
+// Get all drivers assigned by agent with property details
+exports.getAgentAssignments = async (req, res) => {
   try {
-    const { assignmentId, response } = req.body; // response: 'accept' or 'decline'
-    const driverId = req.user.id;
+    const agentId = req.user.id;
 
-    const assignment = await Assignment.findOne({
-      _id: assignmentId,
-      driverId
+    const assignments = await Assignment.find({ agentId })
+      .populate({
+        path: 'propertyId',
+        select: 'title price location.address details.property_type requested_id',
+        populate: {
+          path: 'requested_id',
+          select: 'seller propertyName',
+          populate: {
+            path: 'seller',
+            select: 'fullname phone email'
+          }
+        }
+      })
+      .populate('driverId', 'fullname mobile email vehicleInfo')
+      .sort({ createdAt: -1 });
+
+    const formattedAssignments = assignments.map(assignment => {
+      const property = assignment.propertyId;
+      const requestedProperty = property.requested_id;
+      
+      return {
+        _id: assignment._id,
+        status: assignment.status,
+        assignedAt: assignment.createdAt,
+        driver: assignment.driverId,
+        property: {
+          _id: property._id,
+          title: property.title,
+          price: property.price,
+          address: property.location.address,
+          type: property.details.property_type,
+          seller: requestedProperty ? {
+            _id: requestedProperty.seller._id,
+            fullname: requestedProperty.seller.fullname,
+            phone: requestedProperty.seller.phone,
+            email: requestedProperty.seller.email
+          } : null
+        }
+      };
     });
 
-    if (!assignment) {
-      return res.status(404).json({ message: 'Assignment not found' });
-    }
+    res.status(200).json({
+      success: true,
+      count: assignments.length,
+      data: formattedAssignments
+    });
 
-    if (assignment.status !== 'pending') {
-      return res.status(400).json({ message: 'Assignment already responded' });
-    }
-
-    assignment.status = response === 'accept' ? 'accepted' : 'declined';
-    assignment.driverResponseAt = new Date();
-    await assignment.save();
-
-    res.json(assignment);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching agent assignments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch agent assignments',
+      error: error.message
+    });
+  }
+};
+
+// Get all properties assigned to driver with agent details
+exports.getDriverAssignments = async (req, res) => {
+  try {
+    const driverId = req.user.id;
+
+    const assignments = await Assignment.find({ driverId })
+      .populate({
+        path: 'propertyId',
+        select: 'title price location.address details.property_type requested_id',
+        populate: {
+          path: 'requested_id',
+          select: 'seller propertyName',
+          populate: {
+            path: 'seller',
+            select: 'fullname phone email'
+          }
+        }
+      })
+      .populate('agentId', 'fullname mobile email company')
+      .sort({ createdAt: -1 });
+
+    const formattedAssignments = assignments.map(assignment => {
+      const property = assignment.propertyId;
+      const requestedProperty = property.requested_id;
+      
+      return {
+        _id: assignment._id,
+        status: assignment.status,
+        assignedAt: assignment.createdAt,
+        agent: assignment.agentId,
+        property: {
+          _id: property._id,
+          title: property.title,
+          price: property.price,
+          address: property.location.address,
+          type: property.details.property_type,
+          seller: requestedProperty ? {
+            _id: requestedProperty.seller._id,
+            fullname: requestedProperty.seller.fullname,
+            phone: requestedProperty.seller.phone,
+            email: requestedProperty.seller.email
+          } : null
+        }
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: assignments.length,
+      data: formattedAssignments
+    });
+
+  } catch (error) {
+    console.error('Error fetching driver assignments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch driver assignments',
+      error: error.message
+    });
   }
 };
 
 // Driver uploads media and location
+// exports.uploadMediaAndLocation = async (req, res) => {
+//   try {
+//     const { assignmentId, longitude, latitude } = req.body;
+//     const driverId = req.user.id;
+
+//     // Find the assignment
+//     const assignment = await Assignment.findOne({
+//       _id: assignmentId,
+//       driverId,
+//       // status: 'accepted'
+//     });
+
+//     if (!assignment) {
+//       return res.status(404).json({ 
+//         success: false,
+//         message: 'Assignment not found or not accepted' 
+//       });
+//     }
+
+//     // Process uploaded files
+//     const media = [];
+    
+//     // Handle image files
+//     if (req.files && req.files.images) {
+//       const images = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
+//       images.forEach(file => {
+//         media.push({
+//           url: file.path.replace(/\\/g, '/'), // Convert backslashes to forward slashes for consistency
+//           type: 'image',
+//           uploadedAt: Date.now()
+//         });
+//       });
+//     }
+
+//     // Handle video files
+//     if (req.files && req.files.videos) {
+//       const videos = Array.isArray(req.files.videos) ? req.files.videos : [req.files.videos];
+//       videos.forEach(file => {
+//         media.push({
+//           url: file.path.replace(/\\/g, '/'),
+//           type: 'video',
+//           uploadedAt: Date.now()
+//         });
+//       });
+//     }
+
+//     // Update assignment
+//     assignment.media = media;
+    
+//     if (longitude && latitude) {
+//       assignment.location = {
+//         type: 'Point',
+//         coordinates: [parseFloat(longitude), parseFloat(latitude)]
+//       };
+//     }
+    
+//     assignment.status = 'media_uploaded';
+//     await assignment.save();
+
+//     res.status(200).json({
+//       success: true,
+//       data: assignment
+//     });
+
+//   } catch (error) {
+//     console.error('Error uploading media:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to upload media',
+//       error: error.message
+//     });
+//   }
+// };
+
+
 exports.uploadMediaAndLocation = async (req, res) => {
-     try {
-       const { assignmentId, media, longitude, latitude } = req.body;
-       const driverId = req.user.id;
-   
-       const assignment = await Assignment.findOne({
-         _id: assignmentId,
-         driverId,
-         status: 'accepted'
-       });
-   
-       if (!assignment) {
-         return res.status(404).json({ message: 'Assignment not found or not accepted' });
-       }
-   
-       assignment.media = media;
-       assignment.location = {
-         type: 'Point',
-         coordinates: [longitude, latitude]
-       };
-       assignment.status = 'media_uploaded';
-       await assignment.save();
-   
-       res.json(assignment);
-     } catch (error) {
-       res.status(500).json({ message: error.message });
-     }
-   };
+  try {
+    const { assignmentId, longitude, latitude } = req.body;
+    const driverId = req.user.id;
+
+    const assignment = await Assignment.findOne({
+      _id: assignmentId,
+      driverId,
+    });
+
+    if (!assignment) {
+      // Clean up uploaded files if assignment not found
+      if (req.files) {
+        const files = Object.values(req.files).flat();
+        files.forEach(file => fs.unlinkSync(file.path));
+      }
+      return res.status(404).json({ 
+        success: false,
+        message: 'Assignment not found' 
+      });
+    }
+
+    const media = [];
+    
+    // Process all files (both images and videos)
+    if (req.files) {
+      const files = Object.values(req.files).flat();
+      files.forEach(file => {
+        media.push({
+          url: file.url, // Using the URL generated by middleware
+          type: file.mimetype.startsWith('image/') ? 'image' : 'video',
+          uploadedAt: Date.now()
+        });
+      });
+    }
+
+    // Update assignment
+    assignment.media = media;
+    
+    if (longitude && latitude) {
+      assignment.location = {
+        type: 'Point',
+        coordinates: [parseFloat(longitude), parseFloat(latitude)]
+      };
+    }
+    
+    assignment.status = 'media_uploaded';
+    await assignment.save();
+
+    res.status(200).json({
+      success: true,
+      data: assignment
+    });
+
+  } catch (error) {
+    console.error('Error uploading media:', error);
+    // Clean up files on error
+    if (req.files) {
+      const files = Object.values(req.files).flat();
+      files.forEach(file => {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (err) {
+          console.error('Error deleting file:', err);
+        }
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload media',
+      error: error.message
+    });
+  }
+};
 
 // Agent reviews driver's submission
 exports.reviewSubmission = async (req, res) => {
@@ -113,28 +386,29 @@ exports.reviewSubmission = async (req, res) => {
   }
 };
 
-// Get assignments for user based on role
-exports.getAssignments = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const role = req.user.role;
+// not used 
+// // Get assignments for user based on role
+// exports.getAssignments = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const role = req.user.role;
     
-    let assignments;
+//     let assignments;
     
-    if (role === 'agent') {
-      assignments = await Assignment.find({ agentId: userId })
-        .populate('driverId', 'name email phone')
-        .populate('propertyId');
-    } else if (role === 'driver') {
-      assignments = await Assignment.find({ driverId: userId })
-        .populate('agentId', 'name email phone')
-        .populate('propertyId');
-    } else {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
+//     if (role === 'agent') {
+//       assignments = await Assignment.find({ agentId: userId })
+//         .populate('driverId', 'fullname email mobile')
+//         .populate('propertyId');
+//     } else if (role === 'driver') {
+//       assignments = await Assignment.find({ driverId: userId })
+//         .populate('agentId', 'fullname email mobile')
+//         .populate('propertyId');
+//     } else {
+//       return res.status(403).json({ message: 'Unauthorized' });
+//     }
 
-    res.json(assignments);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+//     res.json(assignments);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };

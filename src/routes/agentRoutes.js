@@ -8,9 +8,12 @@ const {
   deleteUserByRole,
   getProfile,
 } = require("../controllers/agentController");
+const {
+  validateSignup,
+} = require("../middleware/useValidations");
 
 // Create user by role (admin can create agent/driver, agent can create driver)
-router.post("/create", accessTokenVerify, createUserByRole);
+router.post("/create",validateSignup, accessTokenVerify, createUserByRole);
 
 // Get users by role (admin gets agents/drivers, agent gets drivers)
 router.get("/role/:role", accessTokenVerify, getUsersByRole);
