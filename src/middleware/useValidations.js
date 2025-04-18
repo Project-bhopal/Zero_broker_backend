@@ -27,7 +27,7 @@ const validateSignup = [
     body("role")
         .trim()
         .customSanitizer(value => value.toLowerCase())
-        .isIn(["admin", "seller", "buyer"]).withMessage("Role must be one of (admin, buyer, seller)"),
+        .isIn(["admin", "seller", "buyer","driver","agent"]).withMessage("Role must be one of (admin, buyer, seller)"),
 
     body("email")
         .trim()

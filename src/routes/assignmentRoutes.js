@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const assignmentController = require('../controllers/assignmentController');
+const { uploadDriverMedia } = require("../utils/multer");
 // const authMiddleware = require('../middlewares/authMiddleware');
 // const roleMiddleware = require('../middlewares/roleMiddleware');
 const {authorizeRoles,accessTokenVerify}=require("../middleware/authMiddleware")
@@ -13,6 +14,12 @@ router.post(
   assignmentController.assignProperty
 );
 
+// Agent routes
+router.get('/agent/assignments', accessTokenVerify, authorizeRoles('agent'), assignmentController.getAgentAssignments);
+
+// Driver routes
+router.get('/driver/assignments', accessTokenVerify, authorizeRoles('driver'), assignmentController.getDriverAssignments);
+
 router.put(
   '/review',
   accessTokenVerify,
@@ -20,27 +27,20 @@ router.put(
   assignmentController.reviewSubmission
 );
 
-// Driver routes
-router.put(
-  '/respond',
-  accessTokenVerify,
-  authorizeRoles('driver'),
-  assignmentController.respondToAssignment
-);
 
-router.put(
-  '/upload',
+router.post(
+  "/assignments/media",
   accessTokenVerify,
   authorizeRoles('driver'),
+  uploadDriverMedia,
   assignmentController.uploadMediaAndLocation
 );
-
 // Common routes
-router.get(
-  '/',
-  accessTokenVerify,
-  authorizeRoles('agent', 'driver'),
-  assignmentController.getAssignments
-);
+// router.get(
+//   '/',
+//   accessTokenVerify,
+//   authorizeRoles('agent', 'driver'),
+//   assignmentController.getAssignments
+// );
 
 module.exports = router;

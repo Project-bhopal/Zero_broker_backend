@@ -2,59 +2,58 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Define the path to the existing src directory (one level up)
-const srcDir = path.join(__dirname, ".."); // Adjust this based on your folder structure
-const uploadDir = path.join(srcDir, "uploads"); // Create 'uploads' inside the existing 'src'
+// Base URL configuration
+
+const BASE_URL = process.env.DOMAIN || "http://localhost:8000";
+
+// Define paths
+const srcDir = path.join(__dirname, "..");
+const uploadDir = path.join(srcDir, "uploads");
 const imagesDir = path.join(uploadDir, "images");
 const videosDir = path.join(uploadDir, "videos");
 const bannersDir = path.join(uploadDir, "banners");
 const offersDir = path.join(uploadDir, "offers");
-const adsDir = path.join(uploadDir,"ads")
+const adsDir = path.join(uploadDir, "ads");
+const driverMediaDir = path.join(uploadDir, "driver-media");
 
-// Function to create directories if they don't exist
+// Create directories if they don't exist
 const createDirectories = () => {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-  if (!fs.existsSync(imagesDir)) {
-    fs.mkdirSync(imagesDir, { recursive: true });
-  }
-  if (!fs.existsSync(videosDir)) {
-    fs.mkdirSync(videosDir, { recursive: true });
-  }
-  if (!fs.existsSync(bannersDir)) {
-    fs.mkdirSync(bannersDir, { recursive: true });
-  }
-  if (!fs.existsSync(offersDir)) {
-    fs.mkdirSync(offersDir, { recursive: true });
-  }
-  if(!fs.existsSync(adsDir)){
-    fs.mkdirSync(adsDir,{recursive: true})
-  }
+  const dirs = [uploadDir, imagesDir, videosDir, bannersDir, offersDir, adsDir, driverMediaDir];
+  dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
 };
 createDirectories();
 
-// Ensure that the "uploads" folder exists inside the existing "src" directory
-if (fs.existsSync(srcDir)) {
-  createDirectories();
-} else {
-  console.error(`Error: The "src" folder does not exist at ${srcDir}`);
-}
+// Common file filter
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only images and videos are allowed!"), false);
+  }
+};
 
-// Define storage engine
+// Helper function to generate public URL
+const generatePublicUrl = (file, folder) => {
+  return `${BASE_URL}/uploads/${folder}/${file.filename}`;
+};
+
+// Main storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    if (!fs.existsSync(uploadDir)) createDirectories(); // Ensure folders exist before storing files
+    createDirectories(); // Ensure folders exist
+    
     if (file.mimetype.startsWith("image/")) {
       if (req.url.includes("/create")) {
         cb(null, bannersDir);
-      }
-      else if (req.baseUrl.includes("/offers")) {
+      } else if (req.baseUrl.includes("/offers")) {
         cb(null, offersDir);
       } else if (req.baseUrl.includes("/ads")) {
         cb(null, adsDir);
-      }
-      else{
+      } else {
         cb(null, imagesDir);
       }
     } else if (file.mimetype.startsWith("video/")) {
@@ -64,37 +63,78 @@ const storage = multer.diskStorage({
     }
   },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
-  },
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
-// Define file filter for only images and videos
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only images and videos are allowed!"), false);
+// Driver media specific storage
+const driverMediaStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    createDirectories();
+    cb(null, driverMediaDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`);
   }
-};
+});
 
-// Multer Upload Functions
+// Create upload instances
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // Limit file size to 100MB per file
-  fileFilter: fileFilter,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: fileFilter
 });
 
-// module.exports = {
-//   uploadSingle: (fieldName) => upload.single(fieldName),  // For single file upload
-//   uploadMultiple: (fieldName, maxCount) => upload.array(fieldName, maxCount), // For multiple file upload
-//   uploadSingleVideo: (fieldName) => upload.single(fieldName),  // For single video upload
-//   uploadMultipleVideos: (fieldName, maxCount) => upload.array(fieldName, maxCount), // For multiple video upload
-// };
-module.exports = {
-  upload,
-  uploadSingle: (fieldName) => upload.single(fieldName),
-  uploadMultiple: (fieldName, maxCount) => upload.array(fieldName, maxCount),
-  uploadSingleVideo: (fieldName) => upload.single(fieldName),
-  uploadMultipleVideos: (fieldName, maxCount) => upload.array(fieldName, maxCount),
+const driverMediaUpload = multer({
+  storage: driverMediaStorage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: fileFilter
+});
+
+// Middleware to add file URLs to request
+const DRIVER_MEDIA_PATH = 'driver-media';
+
+// Modify the addFileUrls middleware
+const addFileUrls = (req, res, next) => {
+  if (req.files) {
+    // Handle array of files
+    if (Array.isArray(req.files)) {
+      req.files.forEach(file => {
+        const folder = file.mimetype.startsWith('image/') ? 
+          (file.destination.includes('banners') ? 'banners' : 
+           file.destination.includes('offers') ? 'offers' :
+           file.destination.includes('ads') ? 'ads' : 
+           file.destination.includes('driver-media') ? DRIVER_MEDIA_PATH : 'images') : 
+          (file.destination.includes('driver-media') ? DRIVER_MEDIA_PATH : 'videos');
+        file.url = generatePublicUrl(file, folder);
+      });
+    } 
+    // Handle object with multiple fields (for driver media)
+    else {
+      Object.keys(req.files).forEach(field => {
+        req.files[field].forEach(file => {
+          const folder = file.mimetype.startsWith('image/') ? DRIVER_MEDIA_PATH : DRIVER_MEDIA_PATH;
+          file.url = generatePublicUrl(file, folder);
+        });
+      });
+    }
+  }
+  next();
 };
 
+// Export all upload functions
+module.exports = {
+  BASE_URL,
+  upload,
+  uploadSingle: (fieldName) => [upload.single(fieldName), addFileUrls],
+  uploadMultiple: (fieldName, maxCount) => [upload.array(fieldName, maxCount), addFileUrls],
+  uploadSingleVideo: (fieldName) => [upload.single(fieldName), addFileUrls],
+  uploadMultipleVideos: (fieldName, maxCount) => [upload.array(fieldName, maxCount), addFileUrls],
+  uploadDriverMedia: [driverMediaUpload.fields([
+    { name: 'images', maxCount: 10 },
+    { name: 'videos', maxCount: 5 }
+  ]), addFileUrls],
+  generatePublicUrl // Export the URL generator for use in controllers
+};

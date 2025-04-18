@@ -20,12 +20,11 @@ const assignmentSchema = new Schema({
     type: {
       type: String,
       enum: ['Point'],
-      default: 'Point',
-      required: true
+      required:false
     },
     coordinates: {
       type: [Number],  // [longitude, latitude]
-      required: true,
+      required: false, 
       validate: {
         validator: function(v) {
           return v.length === 2 && 
