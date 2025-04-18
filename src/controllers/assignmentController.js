@@ -209,6 +209,96 @@ exports.getDriverAssignments = async (req, res) => {
   }
 };
 
+
+// Get all driver media submissions with property details (for agent)
+exports.getDriverSubmissions = async (req, res) => {
+  try {
+    const agentId = req.user.id;
+
+    // Find all assignments for this agent with media uploads
+    const assignments = await Assignment.find({
+      agentId,
+      status: { $in: ['media_uploaded', 'approved', 'rejected'] } // Include multiple statuses
+    })
+    .populate({
+      path: 'driverId',
+      select: 'fullname mobile vehicleInfo profilePhoto'
+    })
+    .populate({
+      path: 'propertyId',
+      select: 'title price location details requested_id',
+      // populate: [{
+      //   path: 'seller',
+      //   select: 'fullname phone email'
+      // }, {
+      //   path: 'requested_id',
+      //   select: 'propertyName'
+      // }]
+    })
+    .sort({ updatedAt: -1 });
+
+    if (!assignments || assignments.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No driver submissions found for your properties'
+      });
+    }
+
+    // Format response data according to schema
+    const formattedSubmissions = assignments.map(assignment => {
+      const property = assignment.propertyId;
+      const driver = assignment.driverId;
+      const requestedProperty = property.requested_id;
+
+      return {
+        assignmentId: assignment._id,
+        status: assignment.status,
+        submittedAt: assignment.updatedAt,
+        driver: {
+          id: driver?._id,
+          name: driver?.fullname,
+          mobile: driver?.mobile,
+          vehicle: driver?.vehicleInfo,
+          profilePhoto: driver?.profilePhoto
+        },
+        property: {
+          id: property?._id,
+          title: property?.title || requestedProperty?.propertyName,
+          price: property?.price,
+          address: property?.location?.address,
+          type: property?.details?.property_type,
+          seller: property?.seller ? {
+            name: property.seller.fullname,
+            phone: property.seller.phone,
+            email: property.seller.email
+          } : null
+        },
+        media: assignment.media?.map(mediaItem => ({
+          url: mediaItem.url,
+          type: mediaItem.type,
+          uploadedAt: mediaItem.uploadedAt
+        })) || [],
+        location: assignment.location || null,
+        feedback: assignment.agentFeedback,
+        canApprove: assignment.status === 'media_uploaded'
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: assignments.length,
+      data: formattedSubmissions
+    });
+
+  } catch (error) {
+    console.error('Error fetching driver submissions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch driver submissions',
+      error: error.message
+    });
+  }
+};
 // Driver uploads media and location
 // exports.uploadMediaAndLocation = async (req, res) => {
 //   try {
@@ -363,26 +453,80 @@ exports.uploadMediaAndLocation = async (req, res) => {
 // Agent reviews driver's submission
 exports.reviewSubmission = async (req, res) => {
   try {
-    const { assignmentId, status, feedback } = req.body; // status: 'approved' or 'rejected'
+    const { assignmentId } = req.params; // Changed from body to params
+    const { status, feedback } = req.body;
     const agentId = req.user.id;
 
-    const assignment = await Assignment.findOne({
-      _id: assignmentId,
-      agentId,
-      status: 'media_uploaded'
-    });
-
-    if (!assignment) {
-      return res.status(404).json({ message: 'Assignment not found or not ready for review' });
+    // Validate input
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be either "approved" or "rejected"'
+      });
     }
 
-    assignment.status = status;
-    assignment.agentFeedback = feedback;
-    await assignment.save();
+    // Find and validate assignment
+    const assignment = await Assignment.findOneAndUpdate(
+      {
+        _id: assignmentId,
+        agentId,
+        status: 'media_uploaded' // Only allow review if in this state
+      },
+      {
+        status,
+        agentFeedback: feedback,
+        updatedAt: new Date() // Explicitly update timestamp
+      },
+      { new: true } // Return the updated document
+    )
+    .populate('driverId', 'fullname mobile') // Include driver info
+    .populate('propertyId', 'title location.address'); // Include property info
 
-    res.json(assignment);
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found, already processed, or not authorized'
+      });
+    }
+
+    // Format response
+    const response = {
+      success: true,
+      data: {
+        assignmentId: assignment._id,
+        status: assignment.status,
+        feedback: assignment.agentFeedback,
+        updatedAt: assignment.updatedAt,
+        driver: {
+          id: assignment.driverId._id,
+          name: assignment.driverId.fullname,
+          mobile: assignment.driverId.mobile
+        },
+        property: {
+          id: assignment.propertyId._id,
+          title: assignment.propertyId.title,
+          address: assignment.propertyId.location?.address
+        }
+      }
+    };
+
+    // Optional: Send notification to driver
+    await Notification.create({
+      userId: assignment.driverId._id,
+      title: 'Submission Reviewed',
+      message: `Your submission has been ${status} by the agent`,
+      type: 'assignment_review'
+    });
+
+    res.status(200).json(response);
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error reviewing submission:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to review submission',
+      error: error.message
+    });
   }
 };
 
