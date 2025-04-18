@@ -21,7 +21,7 @@ router.get('/agent/assignments', accessTokenVerify, authorizeRoles('agent'), ass
 router.get('/driver/assignments', accessTokenVerify, authorizeRoles('driver'), assignmentController.getDriverAssignments);
 
 router.put(
-  '/review',
+ '/assignments/:assignmentId/review',
   accessTokenVerify,
   authorizeRoles('agent'),
   assignmentController.reviewSubmission
@@ -35,6 +35,16 @@ router.post(
   uploadDriverMedia,
   assignmentController.uploadMediaAndLocation
 );
+
+
+// routes/assignmentRoutes.js
+router.get(
+  '/assignments/submissions',
+  accessTokenVerify,
+  authorizeRoles('agent'),
+  assignmentController.getDriverSubmissions
+);
+
 // Common routes
 // router.get(
 //   '/',
